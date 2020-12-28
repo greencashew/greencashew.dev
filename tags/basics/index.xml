@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Basics on Jan Górkiewicz - Programmer Technical Blog</title><link>/tags/basics/</link><description>Recent content in Basics on Jan Górkiewicz - Programmer Technical Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 24 Mar 2020 18:51:20 +0100</lastBuildDate><atom:link href="/tags/basics/index.xml" rel="self" type="application/rss+xml"/><item><title>Python3 basics cheatsheet</title><link>/posts/python3-basics-cheatsheet/</link><pubDate>Tue, 24 Mar 2020 18:51:20 +0100</pubDate><guid>/posts/python3-basics-cheatsheet/</guid><description>Basic calculations Exponentiation
+2 ** 4 #out 16 Modulo: (Rest of the division)
+5 % 2 #out 1 Variable definition
+var=5 super_crazy_var=5 Comment:
+# Some comment String String definition (In quotes):
+&amp;#34;I can&amp;#39;t touch anything&amp;#34; Print variable:
+print(var) Format method:
+print(&amp;#39;My number is {} and my name is {}&amp;#39;.format(2,&amp;#34;Jan&amp;#34;)) Format method 2:
+print(&amp;#39;My number is {num} and my name is {name} and {num}&amp;#39;.format(num=2,name=&amp;#34;Jan&amp;#34;)) Indexing of strings:
+pintf(s[0]) Slicing: (From 0 to 4)</description></item></channel></rss>

