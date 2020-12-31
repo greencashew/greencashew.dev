@@ -1,4 +1,4 @@
-# [greencashew.github.io](https://greencashew.github.io/)
+# [greencashew.dev](https://greencashew.dev/)
 
 This repository serves my technical blog via GitHub Pages.
 
