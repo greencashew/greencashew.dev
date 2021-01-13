@@ -660,6 +660,113 @@ uid<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root
 <li><a href="https://www.slideshare.net/cr0hn/rootedcon-2017-docker-might-not-be-your-friend-trojanizing-docker-images/1">https://www.slideshare.net/cr0hn/rootedcon-2017-docker-might-not-be-your-friend-trojanizing-docker-images/1</a></li>
 <li><a href="https://blog.secureideas.com/2020/10/ld_preload-introduction.html">https://blog.secureideas.com/2020/10/ld_preload-introduction.html</a></li>
 </ul>
+]]></content></item><item><title>Schema Theorem - Why Genetic Algorithm is working?</title><link>https://greencashew.dev/posts/schema-theorem-why-genetic-algorithm-is-working/</link><pubDate>Mon, 15 Jun 2020 10:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/schema-theorem-why-genetic-algorithm-is-working/</guid><description>Overview Theorem explains why the GA is working. Schema - a template that identifies a subset of strings with similarities at certain string position. * the wildcard means 0 or 1 (Doesn&amp;rsquo;t matter) S1 = (*01*00110) - this schema is represented by 4 strings (only changes filled): V1 = (0 0 ) V2 = (0 1 ) V3 = (1 0 ) V4 = (1 1 ) Schema Order o(S) is defined as the number of fixed positions in the template: S1 = (*1***1**0) o(S1) = 3 S2 = (*1**01*111) o(S2) = 6 Schema Length δ(S) is the distance between first and last fixed position.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<ul>
+<li>Theorem explains <strong>why the GA is working</strong>.</li>
+<li>Schema - a template that identifies a <strong>subset of strings with similarities at certain string position</strong>.</li>
+<li><code>*</code> the wildcard means 0 or 1 (Doesn&rsquo;t matter)</li>
+</ul>
+<pre><code>S1 = (*01*00110) - this schema is represented by 4 strings (only changes filled):
+V1 = (0  0     )
+V2 = (0  1     )
+V3 = (1  0     )
+V4 = (1  1     )
+</code></pre><ul>
+<li>Schema Order <code>o(S)</code> is defined as the <strong>number of fixed positions</strong> in the template:</li>
+</ul>
+<pre><code>S1 =  (*1***1**0) o(S1) = 3
+S2 = (*1**01*111) o(S2) = 6
+</code></pre><ul>
+<li>Schema Length <code>δ(S)</code> is the <strong>distance</strong> between <strong>first and last</strong> <strong>fixed</strong> position.</li>
+</ul>
+<pre><code>S1 =  (*1***1**0) δ(S1) = 9 - 2 = 7
+S2 = (*1**01*111) δ(S2) = 10 - 2 = 8
+</code></pre><ul>
+<li>Schema Fitness is the <strong>average fitness of all strings matching</strong> the schema.</li>
+</ul>
+<pre><code>f(V) - Fitness of individual
+f(S1) - Fitness of schema1
+
+S1 = (*01*00110)
+V1 = (001000110) f(V1) = 0.2
+V2 = (001100110) f(V2) = 0.5
+V3 = (101000110) f(V3) = 0.8
+V4 = (101100110) f(V4) = 0.5
+
+f(schema) = sum(fitness variables from schema) / (num variables from schema) 
+f(S1) = [f(V1) + f(V2) + f(V3) + f(V4)] / 4 = 4 / 4 = 1
+</code></pre><h2 id="effect-of-ga-on-a-schema">Effect of GA on a schema</h2>
+<h3 id="effect-of-selection-on-schema">Effect of Selection on Schema</h3>
+<ul>
+<li>assume fitness proportional selection</li>
+</ul>
+<pre><code>f(S1) - Fitness of schema1
+f(all) - Average fitness of all individuals
+M(S1) - Excepected number of individuals from schema
+
+M(S1) = f(S1) / f(all)
+</code></pre><p><strong>Schemas with fitness</strong> <code>f(S1) &gt; f(all)</code> are likely to <strong>appear more</strong> in the next generation</p>
+<h3 id="effect-of-crossover-on-schema">Effect of Crossover on Schema</h3>
+<ul>
+<li>assume the single-point crossover</li>
+</ul>
+<p>Schema <code>S1</code> survives crossover operation if at least <strong>one from a parent and offspring</strong> is an instance of the schema <code>S1</code></p>
+<p>Crossover survival example:</p>
+<pre><code>S1 = (* 1 0  * *)
+
+P1 = (1 1 0| 1 0) ∈ S1 
+P2 = (1 0 1| 1 1) ∉ S1
+V1 = (1 1 0  1 1) ∈ S1 =&gt; Schema SURVIVED
+V2 = (1 0 1  1 0) ∉ S1
+
+--------------------------------------
+
+P1 = (1 1| 0 1 0) ∈ S1 
+P2 = (1 0| 1 1 1) ∉ S1
+V1 = (1 1  1 1 1) ∉ S1 
+V2 = (1 0  0 1 0) ∉ S1
+Schema DESTROYED
+</code></pre><p>Calculate probability if crossover occurs <strong>within the defining length</strong> bits:</p>
+<pre><code>m - total length 
+δ(S1) - Schema defining length of schema S1
+Pd(S1) - Probability that crossover happen within defining length of schema S1
+
+Pd(S1) = δ(S1) / (m - 1)
+
+
+S1 = (*10**)
+l = 5
+δ(S1) = 5 - 2 = 3
+
+Pd(S1) = 3 / (5 - 1) = 3/4
+</code></pre><p><strong>Schemas with low order (number of fixed positions) are more likely to survive.</strong></p>
+<h3 id="effect-of-mutation-on-schema">Effect of Mutation on Schema</h3>
+<ul>
+<li>assume mutation is applied gene by gene</li>
+</ul>
+<pre><code>Pm - probability of particular gene mutation
+o(S1) - Order of schema S1
+Ps(S1) - Probability that schema S1 survives mutation
+
+Ps(S1) = (1 - Pm)^o(S1)
+
+S1 = (*10**)
+o(S1) = 2
+Pm = 0.01 - Choosen by me
+
+Ps(S1) = (1 - 0.01)^2 = 0.9801
+</code></pre><p>For schema <code>S1</code> to survive <strong>all fixed bits</strong> must remain <strong>unchanged</strong>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<h3 id="definitions">Definitions</h3>
+<p>Schema theorem - schema with <strong>above-average fitness</strong>, <strong>short defining length</strong> and <strong>lower order</strong> is <strong>more likely to survive</strong></p>
+<p>Building-block hypothesis - GA works well when <strong>short, low-order, highly-fit schemas</strong> recombine to form <strong>more highly fit, higher-order schemas</strong>.</p>
+<h3 id="criticism">Criticism</h3>
+<p>Schema theorem assumes that GA maintains an <strong>infinitely large population</strong>.</p>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><em>Z. Michalewicz: Genetic Algorithms + Data Structures =Evolution Programs, Third Edition, Springer-Verlag, Berlin, 1996.</em></li>
+<li><a href="https://en.wikipedia.org/wiki/Schema_(genetic_algorithms)">https://en.wikipedia.org/wiki/Schema_(genetic_algorithms)</a></li>
+</ul>
 ]]></content></item><item><title>Python3 basics cheatsheet</title><link>https://greencashew.dev/posts/python3-basics-cheatsheet/</link><pubDate>Tue, 24 Mar 2020 18:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/python3-basics-cheatsheet/</guid><description>Basic calculations Exponentiation
 2 ** 4 #out 16 Modulo: (Rest of the division)
 5 % 2 #out 1 Variable definition
