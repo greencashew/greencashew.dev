@@ -1101,7 +1101,106 @@ Ps(S1) = (1 - 0.01)^2 = 0.9801
 <li><em>Z. Michalewicz: Genetic Algorithms + Data Structures =Evolution Programs, Third Edition, Springer-Verlag, Berlin, 1996.</em></li>
 <li><a href="https://en.wikipedia.org/wiki/Schema_(genetic_algorithms)">https://en.wikipedia.org/wiki/Schema_(genetic_algorithms)</a></li>
 </ul>
-]]></content></item><item><title>Python3 basics cheatsheet</title><link>https://greencashew.dev/posts/python3-basics-cheatsheet/</link><pubDate>Tue, 24 Mar 2020 18:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/python3-basics-cheatsheet/</guid><description>Basic calculations Exponentiation
+]]></content></item><item><title>Bash cheat sheet</title><link>https://greencashew.dev/posts/bash-cheat-sheet/</link><pubDate>Fri, 29 May 2020 18:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/bash-cheat-sheet/</guid><description>Cheat sheet verified with Bash 4.4.19
+Variables Set and get
+local var=&amp;#34;Jan&amp;#34; echo $var Arrays Indexed - Standard arrays with number as index array_var=(value1 value2 value3)
+Associative - Index could be any string array_var=([text-index]=value [text-index2]=value2)
+Declare Indexed
+array_var=() array_var=(value1 value2 value3) declare -a array_var Associative
+declare -A array_var Conversion from String Convert string to array. With space separator &amp;quot; &amp;ldquo;
+var_string=&amp;#39;string is automatically converted&amp;#39; array=( &amp;#34;$var_string&amp;#34; ) echo ${array[0]} Print/Get array elements Get first array element</description><content type="html"><![CDATA[<p>Cheat sheet verified with <em>Bash 4.4.19</em></p>
+<h2 id="variables">Variables</h2>
+<p>Set and get</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">local var<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Jan&#34;</span>
+echo $var
+</code></pre></div><h2 id="arrays">Arrays</h2>
+<p>Indexed - Standard arrays with number as index <code>array_var=(value1 value2 value3)</code></p>
+<p>Associative - Index could be any string <code>array_var=([text-index]=value [text-index2]=value2)</code></p>
+<h3 id="declare">Declare</h3>
+<p>Indexed</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">array_var<span style="color:#f92672">=()</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">array_var<span style="color:#f92672">=(</span>value1 value2 value3<span style="color:#f92672">)</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">declare -a array_var
+</code></pre></div><p>Associative</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">declare -A array_var
+</code></pre></div><h3 id="conversion-from-string">Conversion from String</h3>
+<p>Convert string to array. <strong>With space separator &quot; &ldquo;</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">var_string<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;string is automatically converted&#39;</span>
+array<span style="color:#f92672">=(</span> <span style="color:#e6db74">&#34;</span>$var_string<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">)</span>
+echo <span style="color:#e6db74">${</span>array[0]<span style="color:#e6db74">}</span>
+</code></pre></div><h3 id="printget-array-elements">Print/Get array elements</h3>
+<p>Get first array element</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">array<span style="color:#f92672">=(</span>value1 value2 value3<span style="color:#f92672">)</span>
+echo <span style="color:#e6db74">${</span>array[1]<span style="color:#e6db74">}</span>
+<span style="color:#e6db74">`</span>value1<span style="color:#e6db74">`</span>
+</code></pre></div><p>Get all array elements</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">array<span style="color:#f92672">=(</span>value1 value2 value3<span style="color:#f92672">)</span>
+echo <span style="color:#e6db74">${</span>array[@]<span style="color:#e6db74">}</span>
+</code></pre></div><p>Get array size</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">echo <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${#</span>array[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</code></pre></div><p>Get index of array element</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">array<span style="color:#f92672">=(</span>feb may jan<span style="color:#f92672">)</span>
+value<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;jan&#39;</span>
+
+<span style="color:#66d9ef">for</span> i in <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>!array[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>; <span style="color:#66d9ef">do</span>
+   <span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>array[$i]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>value<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+       echo <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>i<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>;
+   <span style="color:#66d9ef">fi</span>
+<span style="color:#66d9ef">done</span>
+</code></pre></div><p>Output:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#ae81ff">2</span>
+</code></pre></div><p>Merge arrays</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">combined<span style="color:#f92672">=(</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>array1[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>array2[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">)</span>
+</code></pre></div><p>Merge arrays and remove duplicates</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">no_duplicates<span style="color:#f92672">=(</span> <span style="color:#66d9ef">$(</span>printf <span style="color:#e6db74">&#39;%s\n&#39;</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>array[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> | sort -uz<span style="color:#66d9ef">)</span> <span style="color:#f92672">)</span>
+</code></pre></div><p>Check if array contains some value</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#66d9ef">function</span> contains<span style="color:#f92672">(){</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> <span style="color:#e6db74">&#34; </span><span style="color:#e6db74">${</span>some_array[@]<span style="color:#e6db74">}</span><span style="color:#e6db74"> &#34;</span> <span style="color:#f92672">=</span>~ <span style="color:#e6db74">&#34; </span><span style="color:#e6db74">${</span>some_value<span style="color:#e6db74">}</span><span style="color:#e6db74"> &#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+          echo <span style="color:#e6db74">&#34;FOUND&#34;</span>
+        <span style="color:#66d9ef">else</span>
+          echo <span style="color:#e6db74">&#34;NOT FOUND&#34;</span>
+        <span style="color:#66d9ef">fi</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h2 id="conditionals">Conditionals</h2>
+<p>Simple if else</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;true&#34;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;false&#34;</span> <span style="color:#f92672">]</span> <span style="color:#66d9ef">then</span>
+    echo You may go to the party.
+<span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;false&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;true&#34;</span> <span style="color:#f92672">]</span> <span style="color:#66d9ef">then</span>
+    echo You may go to the party but be back before midnight.
+<span style="color:#66d9ef">else</span>
+    echo You may not go to the party.
+<span style="color:#66d9ef">fi</span>
+</code></pre></div><p><strong>test</strong> command =&gt; In conditionals: <strong>[]</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">value<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+<span style="color:#f92672">[[</span> <span style="color:#66d9ef">$(</span>test $value<span style="color:#66d9ef">)</span> -eq <span style="color:#ae81ff">1</span> <span style="color:#f92672">]]</span> <span style="color:#f92672">||</span> echo <span style="color:#e6db74">&#34;Condition not fulfilled.&#34;</span>
+</code></pre></div><p>Output:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Condition not fulfilled.
+</code></pre></div><h2 id="string-operations">String operations</h2>
+<p>Replace space with new line</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">echo <span style="color:#e6db74">&#34;String with spaces&#34;</span>  | tr <span style="color:#e6db74">&#39; &#39;</span> <span style="color:#e6db74">&#39;\n&#39;</span>
+</code></pre></div><p>Output:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">String
+with
+spaces
+</code></pre></div><p>Substitute words in variable:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Marko&#34;</span>
+grade<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>
+input<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Hello I&#39;m #name. My grade is #grade.&#34;</span>
+command<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>echo <span style="color:#e6db74">&#34;</span>$input<span style="color:#e6db74">&#34;</span> | sed <span style="color:#e6db74">&#34;s/#name/</span>$name<span style="color:#e6db74">/gi&#34;</span> | sed <span style="color:#e6db74">&#34;s/#grade/</span>$grade<span style="color:#e6db74">/gi&#34;</span><span style="color:#66d9ef">)</span>
+echo $command
+</code></pre></div><p>Output:</p>
+<pre><code class="language-log" data-lang="log">Hello I'm Marko. My grade is 5.
+</code></pre><h2 id="files">Files</h2>
+<p>for through files in path</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#66d9ef">for</span> path in /some/path/*; <span style="color:#66d9ef">do</span>
+    readFile <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>path<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+<span style="color:#66d9ef">done</span>
+</code></pre></div><p>Read line in a file with empty lines, spaces and comments removal</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sed -e <span style="color:#e6db74">&#39;s/[[:space:]]*#.*// ; /^[[:space:]]*$/d&#39;</span> $1 | <span style="color:#66d9ef">while</span> IFS<span style="color:#f92672">=</span> read -r line <span style="color:#f92672">||</span> <span style="color:#f92672">[</span> -n <span style="color:#e6db74">&#34;</span>$line<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>;
+<span style="color:#66d9ef">do</span>
+    echo $line
+<span style="color:#66d9ef">done</span>
+</code></pre></div>]]></content></item><item><title>Python3 basics cheatsheet</title><link>https://greencashew.dev/posts/python3-basics-cheatsheet/</link><pubDate>Tue, 24 Mar 2020 18:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/python3-basics-cheatsheet/</guid><description>Basic calculations Exponentiation
 2 ** 4 #out 16 Modulo: (Rest of the division)
 5 % 2 #out 1 Variable definition
 var=5 super_crazy_var=5 Comment:
