@@ -1,4 +1,337 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Jan Górkiewicz - Programmer Technical Blog</title><link>https://greencashew.dev/posts/</link><description>Recent content in Posts on Jan Górkiewicz - Programmer Technical Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Fri, 25 Dec 2020 18:51:20 +0100</lastBuildDate><atom:link href="https://greencashew.dev/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>How to add Reverseshell to host from the privileged container</title><link>https://greencashew.dev/posts/how-to-add-reverseshell-to-host-from-the-privileged-container/</link><pubDate>Fri, 25 Dec 2020 18:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/how-to-add-reverseshell-to-host-from-the-privileged-container/</guid><description>Overview Docker privileged mode grants a Docker container root capabilities to all devices on the host system. Some docker containers require extra privileges to access kernel host (e.g. to allow run docker inside docker). Unfortunately, these root capabilities can be also used to breakout container and even gain root capabilities.
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Jan Górkiewicz - Programmer Technical Blog</title><link>https://greencashew.dev/posts/</link><description>Recent content in Posts on Jan Górkiewicz - Programmer Technical Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 07 Feb 2021 22:51:20 +0100</lastBuildDate><atom:link href="https://greencashew.dev/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>JavaScript Engine Fundamentals</title><link>https://greencashew.dev/posts/javascript-engine-fundamentals/</link><pubDate>Sun, 07 Feb 2021 22:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/javascript-engine-fundamentals/</guid><description>Overview Javascript was originally designed as a simple scripting language for web browsers. Nowadays ECMAScript (Specification of Javascript) is a fully-featured general-purpose programming language. It empowers a wide spectrum of different purpose applications. We can even find JS solutions in Space.
+This article gives outline of some JS language fundamentals, that can help improve efficient code.
+Engines There are few JS engines which in different way resolve ECMASCRIPT implementation.
+Google V8 Spider Monkey Chakra Core JavaScript Core The main engine features are: compilation, run and code optimization.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<p>Javascript was originally designed as a simple scripting language for web browsers.
+Nowadays ECMAScript (Specification of Javascript) is a fully-featured general-purpose programming language. 
+It empowers a wide spectrum of different purpose applications.
+We can even find JS solutions in <a href="https://www.infoq.com/news/2020/06/javascript-spacex-dragon/">Space</a>.</p>
+<p>This article gives outline of some JS language fundamentals, that can help improve efficient code.</p>
+<h2 id="engines">Engines</h2>
+<p>There are few JS engines which in different way resolve <em>ECMASCRIPT</em> implementation.</p>
+<p><img src="./js-engines-list.png" alt="List of JS engines and browser usage"></p>
+<ul>
+<li><a href="https://v8.dev/">Google V8</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey">Spider Monkey</a></li>
+<li><a href="https://github.com/chakra-core/ChakraCore">Chakra Core</a></li>
+<li><a href="https://trac.webkit.org/wiki/JavaScriptCore">JavaScript Core</a></li>
+</ul>
+<p>The main engine features are: <strong>compilation, run and code optimization.</strong></p>
+<h2 id="javascript-engine-pipeline">Javascript Engine Pipeline</h2>
+<p>An engines follow in high level same steps:</p>
+<ul>
+<li>Parser build AST (lexical, syntactic, semantic analysis)</li>
+<li>Interpreter generates Bytecode</li>
+<li>Bytecode is translated with JIT (Just In Time) compiler into machine code (only popular code)</li>
+</ul>
+<p><img src="./js-engine-works.svg" alt="Javascript Virtual Machine how it works?"></p>
+<h2 id="js-optimization---engine-trade-offs">JS Optimization - Engine trade-offs</h2>
+<p>All JS engines have to deal with tradeoffs between Low and High code optimization.</p>
+<p>Only once function becomes <em>hot (often used)</em> it is optimized by the compiler.
+The main reason why JS engines optimize only hot functions is that:</p>
+<ul>
+<li>More <strong>compiled code</strong> =&gt; <strong>More memory used</strong></li>
+<li><strong>Compiling code</strong> =&gt; <strong>Extra time</strong></li>
+<li><strong>Less compilation</strong> =&gt; <strong>Slower run</strong></li>
+</ul>
+<p><img src="js-hll-bytecode-machine-code-comparison.png" alt="JS High level code, Bytecode, Machine code comparison"></p>
+<h2 id="objects">Objects</h2>
+<p>Each object is:</p>
+<ul>
+<li>Internally defined as dictionaries.</li>
+<li>Each object variable:
+<ul>
+<li>Has a <strong>defined name in string</strong> form</li>
+<li>Contain <strong>additional property values</strong>:</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Example value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Value</td>
+<td>&ldquo;some value&rdquo;</td>
+<td>Value</td>
+</tr>
+<tr>
+<td>[[Writable]]</td>
+<td>true</td>
+<td>Allow to change the value of the variable</td>
+</tr>
+<tr>
+<td>[[Enumerable]]</td>
+<td>true</td>
+<td>Allow to iterate over a variable (eg. in a loop)</td>
+</tr>
+<tr>
+<td>[[Configurable]]</td>
+<td>true</td>
+<td>Allow to delete an object variable</td>
+</tr>
+</tbody>
+</table>
+<p>To check it, we can use <code>Object.getOwnPropertyDescriptors</code> function:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js">Object.<span style="color:#a6e22e">getOwnPropertyDescriptors</span>({<span style="color:#a6e22e">key1</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;val1&#39;</span>, <span style="color:#a6e22e">key2</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;val2&#39;</span>})
+</code></pre></div><p>Result:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js">{<span style="color:#960050;background-color:#1e0010">…</span>}<span style="color:#960050;background-color:#1e0010">​</span>
+
+<span style="color:#a6e22e">key1</span><span style="color:#f92672">:</span> {<span style="color:#960050;background-color:#1e0010">…</span>}
+<span style="color:#a6e22e">configurable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​</span><span style="color:#a6e22e">enumerable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">value</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;val1&#34;</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">writable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
+<span style="color:#960050;background-color:#1e0010">​</span>
+<span style="color:#a6e22e">key2</span><span style="color:#f92672">:</span> {<span style="color:#960050;background-color:#1e0010">…</span>}
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">configurable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">enumerable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">value</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;val2&#34;</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">writable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
+<span style="color:#960050;background-color:#1e0010">​</span>
+<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
+</code></pre></div><h3 id="arrays">Arrays</h3>
+<ul>
+<li><strong>Similar to objects + auto-updating <code>length</code></strong> property</li>
+<li><strong>All values</strong> in the array field have the <strong>same internal properties</strong>.</li>
+</ul>
+<p>Let&rsquo;s see how property descriptors look for the array:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js">Object.<span style="color:#a6e22e">getOwnPropertyDescriptors</span>([<span style="color:#e6db74">&#39;val1&#39;</span>, <span style="color:#e6db74">&#39;val2&#39;</span>])
+</code></pre></div><p>Result:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js">{<span style="color:#960050;background-color:#1e0010">…</span>}
+<span style="color:#960050;background-color:#1e0010">​</span>
+<span style="color:#ae81ff">0</span><span style="color:#f92672">:</span> {<span style="color:#960050;background-color:#1e0010">…</span>}
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">configurable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">enumerable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">value</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;val1&#34;</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">writable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
+<span style="color:#960050;background-color:#1e0010">​</span>
+<span style="color:#ae81ff">1</span><span style="color:#f92672">:</span> {<span style="color:#960050;background-color:#1e0010">…</span>}
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">configurable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">enumerable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span><span style="color:#960050;background-color:#1e0010">​​</span>
+<span style="color:#a6e22e">value</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;val2&#34;</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">writable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
+<span style="color:#960050;background-color:#1e0010">​</span>
+<span style="color:#a6e22e">length</span><span style="color:#f92672">:</span> {<span style="color:#960050;background-color:#1e0010">…</span>}
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">configurable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">false</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">enumerable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">false</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">value</span><span style="color:#f92672">:</span> <span style="color:#ae81ff">2</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#a6e22e">writable</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>
+<span style="color:#960050;background-color:#1e0010">​​</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
+<span style="color:#960050;background-color:#1e0010">​</span>
+<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
+</code></pre></div><h2 id="hidden-classes--shapes--structures--types--maps">Hidden Classes / Shapes / Structures / Types / Maps</h2>
+<p><strong>When dynamically instantiating an object, these made in the background object <em>hidden class / shape / structure / type / map.</em></strong></p>
+<p>The structure <strong>instead of object value has Offset</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Example value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Offset</td>
+<td>0</td>
+</tr>
+<tr>
+<td>[[Writable]]</td>
+<td>true</td>
+</tr>
+<tr>
+<td>[[Enumerable]]</td>
+<td>true</td>
+</tr>
+<tr>
+<td>[[Configurable]]</td>
+<td>true</td>
+</tr>
+</tbody>
+</table>
+<h3 id="different-terminology">Different terminology</h3>
+<p>Each engine has a different name for the same thing:</p>
+<ul>
+<li>Academic =&gt; Hidden classes</li>
+<li>JavaScriptCore =&gt; Structures</li>
+<li>Chakra =&gt; Types</li>
+<li>V8 =&gt; Maps</li>
+<li>SpiderMonkey =&gt; Shapes</li>
+</ul>
+<p>Let&rsquo;s call it: <em>&ldquo;shape&rdquo;</em> in this article.</p>
+<h3 id="how-does-it-work">How does it work?</h3>
+<ul>
+<li>When <strong>dynamically instantiating</strong> an object, these made in the <strong>background object shape</strong></li>
+<li>Objects with the <strong>same values</strong> can have the <strong>same internal shape (Order is important)</strong></li>
+<li>Each object variable has a <strong>pointer to index or offset of the memory location</strong> where the value of the variable is written.
+<img src="js-engine-shapes.svg" alt="JS engines shapes"></li>
+<li>Empty object =&gt; Empty shape</li>
+<li>Adding variables =&gt; Building new shapes on the fly</li>
+<li>Object shape transition is maintained (due to object mutation)<br>
+<img src="js-engine-transition-chain.svg" alt="JS transition chain"></li>
+<li>In case we have <strong>identical parent objects</strong> transition <strong>chain changes to transition tree</strong></li>
+<li><strong>Chained shapes increase access time</strong>. <strong>To avoid it internal <code>shape table</code> is created</strong> which connects variable to a specific shape of an object.</li>
+<li><strong>Some engines clear the offset field when deleting a single variable</strong>, which slows down the access times</li>
+</ul>
+<h2 id="inline-caching">Inline caching</h2>
+<p>Inline Caching - When calling function, <strong>interpreter remembers the location of the shape</strong> from the object and memory offset of value.
+It enables <strong>faster accesses</strong>. Caching is <strong>not effective if sequentially access different objects.</strong></p>
+<h3 id="types">Types</h3>
+<ul>
+<li><strong>Monomorphic</strong> IC - objects accessed in the sequence have the same shape.</li>
+<li><strong>Polymorphic</strong> IC - objects that are accessed in the sequence have a different shape (4 or less).</li>
+<li><strong>Megamorphic</strong> IC - objects that are accessed in the sequence have a different shape (4 or more), code optimization turned off.</li>
+</ul>
+<h3 id="optimization">Optimization</h3>
+<p>Let&rsquo;s imagine <strong>Megamorphic IC situation</strong> that we call the function with <strong>different shape every function call</strong>. Also, all 5 shapes have some common keys:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-html" data-lang="html">&lt;<span style="color:#f92672">html</span>&gt;
+  &lt;<span style="color:#f92672">script</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;text/javascript&#34;</span>&gt;
+    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">perfTest</span>() {
+      <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">t0</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">performance</span>.<span style="color:#a6e22e">now</span>();
+
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X1</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;A&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;A&#34;</span>, <span style="color:#a6e22e">c</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;A&#34;</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X2</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;B&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;B&#34;</span>, <span style="color:#a6e22e">d</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;B&#34;</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X3</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;C&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;C&#34;</span>, <span style="color:#a6e22e">e</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;C&#34;</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X4</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;D&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;D&#34;</span>, <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X5</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;E&#34;</span> };
+
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">object</span> <span style="color:#f92672">=</span> [<span style="color:#a6e22e">X1</span>, <span style="color:#a6e22e">X2</span>, <span style="color:#a6e22e">X3</span>, <span style="color:#a6e22e">X4</span>, <span style="color:#a6e22e">X5</span>, <span style="color:#a6e22e">X1</span>, <span style="color:#a6e22e">X2</span>, <span style="color:#a6e22e">X3</span>];
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">get_a</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">obj</span>) =&gt; <span style="color:#a6e22e">obj</span>.<span style="color:#a6e22e">a</span>;
+
+      <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">10000000000</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>) <span style="color:#a6e22e">get_a</span>(<span style="color:#a6e22e">object</span>[<span style="color:#a6e22e">i</span> <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>]);
+
+      <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">t1</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">performance</span>.<span style="color:#a6e22e">now</span>();
+
+      document.<span style="color:#a6e22e">write</span>(<span style="color:#e6db74">&#34;Execution took &#34;</span> <span style="color:#f92672">+</span> (<span style="color:#a6e22e">t1</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">t0</span>) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; milliseconds.&#34;</span>);
+    }
+
+    window.<span style="color:#a6e22e">onload</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">function</span> () {
+      <span style="color:#a6e22e">perfTest</span>();
+    };
+  &lt;/<span style="color:#f92672">script</span>&gt;
+&lt;/<span style="color:#f92672">html</span>&gt;
+</code></pre></div><p>Execution time:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js"><span style="color:#a6e22e">Execution</span> <span style="color:#a6e22e">took</span> <span style="color:#ae81ff">26</span> <span style="color:#ae81ff">9154.5499999993</span> <span style="color:#a6e22e">milliseconds</span>.
+</code></pre></div><p>Now let&rsquo;s try to optimize code to make the <strong>same shape</strong> from all 5 objects by adding <code>null</code> values to not covered keys:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-html" data-lang="html"> &lt;<span style="color:#f92672">html</span>&gt;
+  &lt;<span style="color:#f92672">script</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;text/javascript&#34;</span>&gt;
+    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">perfTest</span>() {
+      <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">t0</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">performance</span>.<span style="color:#a6e22e">now</span>();
+
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X1</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;A&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;A&#34;</span>, <span style="color:#a6e22e">c</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;A&#34;</span>, <span style="color:#a6e22e">d</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">e</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X2</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;B&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;B&#34;</span>, <span style="color:#a6e22e">c</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">d</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;B&#34;</span>, <span style="color:#a6e22e">e</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X3</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;C&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;C&#34;</span>, <span style="color:#a6e22e">c</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">d</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">e</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;C&#34;</span>, <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X4</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;D&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;D&#34;</span>, <span style="color:#a6e22e">c</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">d</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">e</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span> };
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">X5</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">a</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;E&#34;</span>, <span style="color:#a6e22e">b</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">c</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">d</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">e</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>, <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span> };
+
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">object</span> <span style="color:#f92672">=</span> [<span style="color:#a6e22e">X1</span>, <span style="color:#a6e22e">X2</span>, <span style="color:#a6e22e">X3</span>, <span style="color:#a6e22e">X4</span>, <span style="color:#a6e22e">X5</span>, <span style="color:#a6e22e">X1</span>, <span style="color:#a6e22e">X2</span>, <span style="color:#a6e22e">X3</span>];
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">get_a</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">obj</span>) =&gt; <span style="color:#a6e22e">obj</span>.<span style="color:#a6e22e">a</span>;
+
+      <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">10000000000</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>) <span style="color:#a6e22e">get_a</span>(<span style="color:#a6e22e">object</span>[<span style="color:#a6e22e">i</span> <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>]);
+
+      <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">t1</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">performance</span>.<span style="color:#a6e22e">now</span>();
+
+      document.<span style="color:#a6e22e">write</span>(<span style="color:#e6db74">&#34;Execution took &#34;</span> <span style="color:#f92672">+</span> (<span style="color:#a6e22e">t1</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">t0</span>) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; milliseconds.&#34;</span>);
+    }
+
+    window.<span style="color:#a6e22e">onload</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">function</span> () {
+      <span style="color:#a6e22e">perfTest</span>();
+    };
+  &lt;/<span style="color:#f92672">script</span>&gt;
+&lt;/<span style="color:#f92672">html</span>&gt;
+</code></pre></div><p>Execution time:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js"><span style="color:#a6e22e">Execution</span> <span style="color:#a6e22e">took</span>  <span style="color:#ae81ff">3</span> <span style="color:#ae81ff">1370.180000005348</span> <span style="color:#a6e22e">milliseconds</span>.
+</code></pre></div><p>Optimized code execution time drastically decreased in comparison of unoptimized. From 26 sec to 3 sec.</p>
+<h3 id="prototypes">Prototypes</h3>
+<ul>
+<li>Prototypes are <strong>specially treated objects</strong>.</li>
+<li>Each JS object has an <strong>inheritance chain up</strong> to the general <code>Object.prototype</code></li>
+<li>JS Engines <strong>in background use object shapes for object prototypes</strong></li>
+<li>Prototypes also <strong>use Inline Cache to have quick access over Shape chain</strong></li>
+<li><code>ValidityCell</code> guarantee that cached <strong>prototype didn&rsquo;t change</strong></li>
+<li>Once <code>ValidityCell</code> became <strong>invalid inline caching is not used any more</strong></li>
+</ul>
+<p><img src="js-engine-inline-caching.svg" alt="JS inline caching - validity cell"></p>
+<h3 id="classes">Classes</h3>
+<p>Classes are <strong>syntax for the prototype.</strong></p>
+<h2 id="garbage-collection">Garbage Collection</h2>
+<p><img src="js-garbage-collection.png" alt="Garbage collection"></p>
+<ul>
+<li>Garbage Collector - the mechanism for <strong>real-time deletion of unused dynamic memory</strong></li>
+<li>Stop a main thread to rearrange references</li>
+<li>Responsible for <strong>memory optimization</strong></li>
+<li>Usually use <strong>Mark &amp; Sweep</strong> or derivatives
+<ul>
+<li>Marking - Mark all <em>alive</em> (which has at least one reference) objects</li>
+<li>Sweeping - <strong>Free memory</strong> from all objects left</li>
+</ul>
+</li>
+<li>Usually, objects are divided into generations:
+<ul>
+<li>Young - Most instances <em>die young</em>, so over the young generation, <strong>GC runs more times</strong></li>
+<li>Old - Old objects <strong>live much longer</strong> e.g. global objects</li>
+</ul>
+</li>
+<li><strong>Optimally</strong> GC run when <strong>idle time detected</strong> e.g. on watching a video, reading longer text</li>
+</ul>
+<h4 id="memory-leak---accidental-global-variables">Memory <em>Leak</em> - Accidental Global Variables</h4>
+<p>When variable inside a function is defined without <code>var</code> prefix it cause that object is assigned to  <code>window</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js"><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">foo</span>(<span style="color:#a6e22e">arg</span>) {
+    <span style="color:#a6e22e">bar</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;hidden global variable&#34;</span>;
+}
+</code></pre></div><p>If <code>this</code> was used it may also cause the same issue:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js"><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">foo</span>() {
+    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">variable</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;potential accidental global&#34;</span>;
+}
+<span style="color:#a6e22e">foo</span>();
+</code></pre></div><p>To avoid it <code>'use strict';</code> the clause can be added at the beginning of JS files.</p>
+<h2 id="why-js-is-not-server-side-compiled-">Why JS is not server side compiled ?</h2>
+<p>You can ask why not to send compiled/bytecode to the browser. This could solve the problem with code optimization.
+To get the answer we need to understand for what purpose JS was designed and what are pros of this solution.</p>
+<p><strong>Simple glue language</strong></p>
+<p>The idea of JS was to be the simple scripting language for non-developers. JS had to be like glue between Java applets.</p>
+<blockquote>
+<p>We aimed to provide a “glue language” for the Web designers and part time programmers who were building Web content from components such as images, plugins, and Java applets. We saw Java as the “component language” used by higher-priced programmers, where the glue programmers – the Web page designers – would assemble components and automate their interactions using JS.</p>
+<p>In this sense, JS was analogous to Visual Basic, and Java to C++, in Microsoft’s programming language family used on Windows and in its applications. This division of labor across the programming pyramid fosters greater innovation than alternatives that require all programmers to use the “real” programming language (Java or C++) instead of the “little” scripting language.</p>
+</blockquote>
+<p>Brendan Eich JS Initial Designer - <a href="https://a-z.readthedocs.io/en/latest/javascript.html">https://a-z.readthedocs.io/en/latest/javascript.html</a></p>
+<p><strong>Embedding into HTML</strong></p>
+<p>JavaScript was designed to be embedded directly in HTML,
+like <code>&lt;input type=&quot;button&quot; onclick=&quot;alert('hello world')&quot;&gt;</code>. This requires JS to be in a textual format.</p>
+<p><strong>Easier development</strong></p>
+<p>We don&rsquo;t need any compiler to JS development only text editor and browser are needed.</p>
+<p><strong>Standardization problems</strong></p>
+<p>Each browser implements EcmaScript in its own way, the only high-level specification defined by committees is agreed. There is no standardization for bytecode or more optimized code.</p>
+<p><strong>Minified and Compressed code</strong></p>
+<p>As EcmaScript can be compressed and minified quite well it&rsquo;s not big loose to not compile on server side.</p>
+<h2 id="performance-advice">Performance advice</h2>
+<ul>
+<li><strong>Always initialize objects in the same way</strong></li>
+<li><strong>Instead of delete property</strong>, prefer to use <code>null</code> or <code>undefined</code></li>
+<li><strong>Don&rsquo;t mix object shapes in an array</strong></li>
+<li><strong>Keep order on object creation</strong> - Order in which the variables are defined is important</li>
+<li><strong>Don&rsquo;t change prototypes</strong> if possible (or change as early as possible)</li>
+<li><strong>Avoid the allocation of global objects</strong></li>
+</ul>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://mathiasbynens.be/notes/shapes-ics">https://mathiasbynens.be/notes/shapes-ics</a></li>
+<li><a href="https://mathiasbynens.be/notes/prototypes">https://mathiasbynens.be/notes/prototypes</a></li>
+<li><a href="https://www.ecma-international.org/ecma-262/11.0/index.html#sec-overview">https://www.ecma-international.org/ecma-262/11.0/index.html#sec-overview</a></li>
+<li><a href="https://a-z.readthedocs.io/en/latest/javascript.html">https://a-z.readthedocs.io/en/latest/javascript.html</a></li>
+<li><a href="https://softwareengineering.stackexchange.com/questions/402250/why-is-javascript-not-compiled-to-bytecode-before-sending-over-the-network">https://softwareengineering.stackexchange.com/questions/402250/why-is-javascript-not-compiled-to-bytecode-before-sending-over-the-network</a></li>
+<li><a href="https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-get-rid-of-them/">https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-get-rid-of-them/</a></li>
+</ul>
+]]></content></item><item><title>How to add Reverseshell to host from the privileged container</title><link>https://greencashew.dev/posts/how-to-add-reverseshell-to-host-from-the-privileged-container/</link><pubDate>Fri, 25 Dec 2020 18:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/how-to-add-reverseshell-to-host-from-the-privileged-container/</guid><description>Overview Docker privileged mode grants a Docker container root capabilities to all devices on the host system. Some docker containers require extra privileges to access kernel host (e.g. to allow run docker inside docker). Unfortunately, these root capabilities can be also used to breakout container and even gain root capabilities.
 Preconditions The attacker has access to the container with --privileged or --cap-add=all mode Checking capabilities First, to simulate the attacker situation let&amp;rsquo;s run the alpine image with --privileged mode.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
 <p>Docker privileged mode grants a Docker container root capabilities to all devices on the host system. Some docker containers require extra privileges to access kernel host (e.g. to allow run docker inside docker). Unfortunately, these root capabilities can be also used to breakout container and even gain root capabilities.</p>
 <h2 id="preconditions">Preconditions</h2>
