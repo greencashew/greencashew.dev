@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Jan Górkiewicz - Programmer Technical Blog</title><link>https://greencashew.dev/posts/</link><description>Recent content in Posts on Jan Górkiewicz - Programmer Technical Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 07 Feb 2021 22:51:20 +0100</lastBuildDate><atom:link href="https://greencashew.dev/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>JavaScript Engine Fundamentals</title><link>https://greencashew.dev/posts/javascript-engine-fundamentals/</link><pubDate>Sun, 07 Feb 2021 22:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/javascript-engine-fundamentals/</guid><description>Overview Javascript was originally designed as a simple scripting language for web browsers. Nowadays ECMAScript (Specification of Javascript) is a fully-featured general-purpose programming language. It empowers a wide spectrum of different purpose applications. We can even find JS solutions in Space.
-This article gives outline of some JS language fundamentals, that can help improve efficient code.
+This article gives outline of some JS language fundamentals, that can help improve your code.
 Engines There are few JS engines which in different way resolve ECMASCRIPT implementation.
 Google V8 Spider Monkey Chakra Core JavaScript Core The main engine features are: compilation, run and code optimization.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
 <p>Javascript was originally designed as a simple scripting language for web browsers.
 Nowadays ECMAScript (Specification of Javascript) is a fully-featured general-purpose programming language. 
 It empowers a wide spectrum of different purpose applications.
 We can even find JS solutions in <a href="https://www.infoq.com/news/2020/06/javascript-spacex-dragon/">Space</a>.</p>
-<p>This article gives outline of some JS language fundamentals, that can help improve efficient code.</p>
+<p>This article gives outline of some JS language fundamentals, that can help improve your code.</p>
 <h2 id="engines">Engines</h2>
 <p>There are few JS engines which in different way resolve <em>ECMASCRIPT</em> implementation.</p>
 <p><img src="./js-engines-list.png" alt="List of JS engines and browser usage"></p>
@@ -26,7 +26,7 @@ We can even find JS solutions in <a href="https://www.infoq.com/news/2020/06/jav
 </ul>
 <p><img src="./js-engine-works.svg" alt="Javascript Virtual Machine how it works?"></p>
 <h2 id="js-optimization---engine-trade-offs">JS Optimization - Engine trade-offs</h2>
-<p>All JS engines have to deal with tradeoffs between Low and High code optimization.</p>
+<p>All JS engines have to deal with tradeoffs between <strong>Low and High code optimization</strong>.</p>
 <p>Only once function becomes <em>hot (often used)</em> it is optimized by the compiler.
 The main reason why JS engines optimize only hot functions is that:</p>
 <ul>
@@ -130,7 +130,7 @@ The main reason why JS engines optimize only hot functions is that:</p>
 <span style="color:#960050;background-color:#1e0010">​</span>
 <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">prototype</span><span style="color:#f92672">&gt;:</span> Object { <span style="color:#960050;background-color:#1e0010">…</span> }
 </code></pre></div><h2 id="hidden-classes--shapes--structures--types--maps">Hidden Classes / Shapes / Structures / Types / Maps</h2>
-<p><strong>When dynamically instantiating an object, these made in the background object <em>hidden class / shape / structure / type / map.</em></strong></p>
+<p><strong>When dynamically instantiating an object, these made in the background <em>hidden class / shape / structure / type / map.</em></strong></p>
 <p>The structure <strong>instead of object value has Offset</strong>:</p>
 <table>
 <thead>
@@ -258,7 +258,7 @@ It enables <strong>faster accesses</strong>. Caching is <strong>not effective if
 <li>JS Engines <strong>in background use object shapes for object prototypes</strong></li>
 <li>Prototypes also <strong>use Inline Cache to have quick access over Shape chain</strong></li>
 <li><code>ValidityCell</code> guarantee that cached <strong>prototype didn&rsquo;t change</strong></li>
-<li>Once <code>ValidityCell</code> became <strong>invalid inline caching is not used any more</strong></li>
+<li>Once <code>ValidityCell</code> became <strong>invalid inline caching is not used anymore</strong></li>
 </ul>
 <p><img src="js-engine-inline-caching.svg" alt="JS inline caching - validity cell"></p>
 <h3 id="classes">Classes</h3>
@@ -293,7 +293,8 @@ It enables <strong>faster accesses</strong>. Caching is <strong>not effective if
     <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">variable</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;potential accidental global&#34;</span>;
 }
 <span style="color:#a6e22e">foo</span>();
-</code></pre></div><p>To avoid it <code>'use strict';</code> the clause can be added at the beginning of JS files.</p>
+</code></pre></div><p>To avoid it <code>'use strict';</code> the clause can be added at the beginning of JS file.
+To avoid it <code>'use strict';</code> the clause can be added at the beginning of JS file.</p>
 <h2 id="why-js-is-not-server-side-compiled-">Why JS is not server side compiled ?</h2>
 <p>You can ask why not to send compiled/bytecode to the browser. This could solve the problem with code optimization.
 To get the answer we need to understand for what purpose JS was designed and what are pros of this solution.</p>
