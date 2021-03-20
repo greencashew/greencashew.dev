@@ -994,6 +994,121 @@ uid<span style="color:#f92672">=</span>0<span style="color:#f92672">(</span>root
 <li><a href="https://www.slideshare.net/cr0hn/rootedcon-2017-docker-might-not-be-your-friend-trojanizing-docker-images/1">https://www.slideshare.net/cr0hn/rootedcon-2017-docker-might-not-be-your-friend-trojanizing-docker-images/1</a></li>
 <li><a href="https://blog.secureideas.com/2020/10/ld_preload-introduction.html">https://blog.secureideas.com/2020/10/ld_preload-introduction.html</a></li>
 </ul>
+]]></content></item><item><title>Kafka fake data producer and consumer in python</title><link>https://greencashew.dev/posts/kafka-fake-data-producer-and-consumer-in-python/</link><pubDate>Wed, 16 Sep 2020 22:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/kafka-fake-data-producer-and-consumer-in-python/</guid><description>Overview Sometimes it can happen that we need quickly add some messages into kafka topic. e.g. need to propagate some fake data into development environment. Python api allow for quick integration with kafka topic.
+Repository with working example could be found in here.
+Setup Kafka At the beginning we need to install and run kafka server. If you already have up and running either zookeeper and kafka you can skip this section.</description><content type="html"><![CDATA[<h2 id="overview">Overview</h2>
+<p>Sometimes it can happen that we need quickly add some messages into kafka topic. e.g. need to propagate some fake data into development environment.
+Python api allow for quick integration with kafka topic.</p>
+<p>Repository with working example could be <a href="https://github.com/greencashew/kafka-python-random-data-example">found in here.</a></p>
+<h2 id="setup-kafka">Setup Kafka</h2>
+<p>At the beginning we need to install and run kafka server.
+If you already have up and running either zookeeper and kafka you can skip this section.</p>
+<p>The quickest way is to install in your <strong>project directory</strong>:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir scripts <span style="color:#f92672">&amp;&amp;</span> cd scripts <span style="color:#f92672">||</span> exit
+curl -fsSL https://raw.githubusercontent.com/greencashew/kafka-python-random-data-example/main/scripts/install-kafka.sh -o install-kafka.sh <span style="color:#f92672">&amp;&amp;</span> chmod <span style="color:#ae81ff">777</span> install-kafka.sh <span style="color:#f92672">&amp;&amp;</span> ./install-kafka.sh
+curl -fsSL https://raw.githubusercontent.com/greencashew/kafka-python-random-data-example/main/scripts/run-zookeeper.sh -o run-zookeeper.sh <span style="color:#f92672">&amp;&amp;</span> chmod <span style="color:#ae81ff">777</span> run-zookeeper.sh
+curl -fsSL https://raw.githubusercontent.com/greencashew/kafka-python-random-data-example/main/scripts/run-kafka.sh -o run-kafka.sh <span style="color:#f92672">&amp;&amp;</span> chmod <span style="color:#ae81ff">777</span> run-kafka.sh
+</code></pre></div><p>Kafka should be installed in <code>vendor</code> directory. <code>KAFKA_HOME</code> should be defined in <code>.env</code> file. In <code>scripts</code> dir it should appear <code>run-zookeeper.sh</code> ,<code>run-kafka.sh</code> scripts.</p>
+<p>To run kafka open terminal window under <code>scripts</code>:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./run-zookeeper.sh
+</code></pre></div><p>In another window run kafka server:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./run-kafka.sh
+</code></pre></div><h2 id="python-dependencies">Python dependencies</h2>
+<p>Before start project it is needed to add required libraries into <code>requirements.txt</code> file:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">Faker==6.6.2
+kafka-python
+</code></pre></div><p>Another step is to install virtual environment and missing dependencies:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+</code></pre></div><h2 id="producer">Producer</h2>
+<p>In example below we can see how to propagate fake trip invoices into kafka topic.
+You have to remember to change <code>BOOTSTRAP_SERVER</code> if it is different one.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> kafka <span style="color:#f92672">import</span> KafkaProducer
+<span style="color:#f92672">import</span> json
+<span style="color:#f92672">import</span> time
+<span style="color:#f92672">import</span> datetime
+<span style="color:#f92672">from</span> faker <span style="color:#f92672">import</span> Faker
+
+KAFKA_TOPIC <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;invoices&#34;</span>
+BOOTSTRAP_SERVER <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;localhost:9092&#39;</span>
+
+fake <span style="color:#f92672">=</span> Faker()
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_random_invoice</span>():
+    tax_percentage <span style="color:#f92672">=</span> <span style="color:#ae81ff">12</span>
+    net_price <span style="color:#f92672">=</span> fake<span style="color:#f92672">.</span>random_int(min<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>, max<span style="color:#f92672">=</span><span style="color:#ae81ff">15</span>)
+    date_time_invoice_created <span style="color:#f92672">=</span> fake<span style="color:#f92672">.</span>date_time_between(start_date<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;-20y&#39;</span>, end_date<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;now&#39;</span>, tzinfo<span style="color:#f92672">=</span>None) \
+        <span style="color:#f92672">.</span>strftime(<span style="color:#e6db74">&#39;%Y-%m-</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">T%H:%M:%S&#39;</span>)
+    <span style="color:#66d9ef">return</span> {
+        <span style="color:#e6db74">&#34;id&#34;</span>: fake<span style="color:#f92672">.</span>random_number(digits<span style="color:#f92672">=</span><span style="color:#ae81ff">12</span>),
+        <span style="color:#e6db74">&#34;name&#34;</span>: fake<span style="color:#f92672">.</span>name(),
+        <span style="color:#e6db74">&#34;date&#34;</span>: date_time_invoice_created,
+        <span style="color:#e6db74">&#34;address&#34;</span>: fake<span style="color:#f92672">.</span>address()<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, <span style="color:#e6db74">&#34; &#34;</span>),
+        <span style="color:#e6db74">&#34;startGate&#34;</span>: fake<span style="color:#f92672">.</span>city(),
+        <span style="color:#e6db74">&#34;exitGate&#34;</span>: fake<span style="color:#f92672">.</span>city(),
+        <span style="color:#e6db74">&#34;price&#34;</span>: {
+            <span style="color:#e6db74">&#34;net&#34;</span>: net_price,
+            <span style="color:#e6db74">&#34;taxPercentage&#34;</span>: tax_percentage,
+            <span style="color:#e6db74">&#34;total&#34;</span>: net_price <span style="color:#f92672">+</span> (net_price <span style="color:#f92672">*</span> (tax_percentage <span style="color:#f92672">/</span> <span style="color:#ae81ff">100</span>))
+        }
+    }
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">json_serializer</span>(data):
+    <span style="color:#66d9ef">return</span> json<span style="color:#f92672">.</span>dumps(data)<span style="color:#f92672">.</span>encode(<span style="color:#e6db74">&#34;utf-8&#34;</span>)
+
+
+producer <span style="color:#f92672">=</span> KafkaProducer(bootstrap_servers<span style="color:#f92672">=</span>[BOOTSTRAP_SERVER],
+                         value_serializer<span style="color:#f92672">=</span>json_serializer)
+
+<span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
+    <span style="color:#66d9ef">while</span> <span style="color:#ae81ff">1</span>:
+        random_invoice <span style="color:#f92672">=</span> get_random_invoice()
+        <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#34;{}: {}&#34;</span><span style="color:#f92672">.</span>format(datetime<span style="color:#f92672">.</span>datetime<span style="color:#f92672">.</span>now()<span style="color:#f92672">.</span>strftime(<span style="color:#e6db74">&#39;</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">-%m-%Y %H:%M:%S&#39;</span>), random_invoice))
+        producer<span style="color:#f92672">.</span>send(KAFKA_TOPIC, random_invoice)
+        time<span style="color:#f92672">.</span>sleep(fake<span style="color:#f92672">.</span>random_int(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">3</span>))
+</code></pre></div><p>To run <code>producer.py</code> simply use:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">python3 ./producer.py
+</code></pre></div><h2 id="consumer">Consumer</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> datetime <span style="color:#f92672">import</span> datetime
+
+<span style="color:#f92672">from</span> kafka <span style="color:#f92672">import</span> KafkaConsumer
+<span style="color:#f92672">import</span> sys
+
+KAFKA_TOPIC <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;invoices&#34;</span>
+BOOTSTRAP_SERVER <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;localhost:9092&#39;</span>
+GROUP_ID <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;consumerGroup1&#39;</span>
+AUTO_OFFSET_RESET <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;earliest&#39;</span>
+
+<span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
+    consumer <span style="color:#f92672">=</span> KafkaConsumer(KAFKA_TOPIC,
+                             group_id<span style="color:#f92672">=</span>GROUP_ID,
+                             bootstrap_servers<span style="color:#f92672">=</span>BOOTSTRAP_SERVER,
+                             auto_offset_reset<span style="color:#f92672">=</span>AUTO_OFFSET_RESET)
+    <span style="color:#66d9ef">try</span>:
+        <span style="color:#66d9ef">for</span> message <span style="color:#f92672">in</span> consumer:
+            <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#34;[{}][{}:{}:{}]: {}&#34;</span><span style="color:#f92672">.</span>format(
+                datetime<span style="color:#f92672">.</span>now()<span style="color:#f92672">.</span>strftime(<span style="color:#e6db74">&#39;</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">-%m-%Y %H:%M:%S&#39;</span>),
+                message<span style="color:#f92672">.</span>topic,
+                message<span style="color:#f92672">.</span>partition,
+                message<span style="color:#f92672">.</span>offset,
+                message<span style="color:#f92672">.</span>value))
+
+    <span style="color:#66d9ef">except</span> <span style="color:#a6e22e">KeyboardInterrupt</span>:
+        sys<span style="color:#f92672">.</span>exit()
+</code></pre></div><p>To run <code>consumer.py</code> simply use:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">python3 ./consumer.py
+</code></pre></div><h2 id="end-words">End words</h2>
+<p>This is very basic example without serializers/deserializers applied. For more details i recommend visiting <a href="https://kafka-python.readthedocs.io/en/master/usage.html">official documentation</a>
+Python api also support <a href="https://avro.apache.org/docs/current/gettingstartedpython.html">avro schemas</a> which is commonly used in kafka.</p>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://kafka.apache.org/">https://kafka.apache.org/</a></li>
+<li><a href="https://kafka-python.readthedocs.io/en/master/usage.html">https://kafka-python.readthedocs.io/en/master/usage.html</a></li>
+<li><a href="https://avro.apache.org/docs/current/gettingstartedpython.html">https://avro.apache.org/docs/current/gettingstartedpython.html</a></li>
+<li><a href="https://github.com/greencashew/kafka-python-random-data-example">https://github.com/greencashew/kafka-python-random-data-example</a></li>
+</ul>
 ]]></content></item><item><title>Representations and Crossovers - Traveling Salesman Problem</title><link>https://greencashew.dev/posts/representations-and-crossovers-traveling-salesman-problem/</link><pubDate>Mon, 29 Jun 2020 10:51:20 +0100</pubDate><guid>https://greencashew.dev/posts/representations-and-crossovers-traveling-salesman-problem/</guid><description>Representations Path representation The most natural representation TOUR: 0-2-4-6-1-5-9-10-7-3-8 - Connected Cities Cycle PATH: (0 2 4 6 1 5 9 10 7 3 8) Adjacency representation Tour is represented as a list of n cities. Each City connection is defined by a list index TOUR: 0-2-4-6-1-5-9-10-7-3-8 - Connected Cities Cycle INDEX: 0 1 2 3 4 5 6 7 8 9 10 ADJACENCY: [2 5 4 8 6 9 1 3 0 10 7] Ordinal representation Tour is represented as a list of n cities.</description><content type="html"><![CDATA[<h2 id="representations">Representations</h2>
 <h3 id="path-representation">Path representation</h3>
 <ul>
