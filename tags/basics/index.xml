@@ -5,6 +5,7 @@ var=5 super_crazy_var=5 Comment:
 # Some comment String String definition (In quotes):
 &amp;#34;I can&amp;#39;t touch anything&amp;#34; Print variable:
 print(var) Format method:
-print(&amp;#39;My number is {} and my name is {}&amp;#39;.format(2,&amp;#34;Jan&amp;#34;)) Format method 2:
-print(&amp;#39;My number is {num} and my name is {name} and {num}&amp;#39;.format(num=2,name=&amp;#34;Jan&amp;#34;)) Indexing of strings:
-pintf(s[0]) Slicing: (From 0 to 4)</description></item></channel></rss>
+print(&amp;#39;My number is {}and my name is {}&amp;#39;.format(2,&amp;#34;Jan&amp;#34;)) Format method 2:
+print(&amp;#39;My number is {num}and my name is {name}and {num}&amp;#39;.format(num=2,name=&amp;#34;Jan&amp;#34;)) Indexing of strings:
+pintf(s[0]) Slicing: (From 0 to 4)
+s=&amp;#34;Hello world!</description></item></channel></rss>
